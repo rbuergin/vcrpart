@@ -1,0 +1,156 @@
+useDynLib(vcrpart, .registration = TRUE)
+
+import("methods", "partykit")
+
+## Exported methods for which generics exist
+importFrom("formula.tools", "lhs", "rhs")
+importFrom("graphics", "plot", "axis", "box", "matplot", "par", "segments")
+importFrom("grDevices", "axisTicks", "col2rgb", "colorRamp",
+           "devAskNewPage", "grey", "rgb")
+importFrom("parallel", "mclapply")
+importFrom("grid", "gpar", "unit", "unit.c", "convertHeight", "convertWidth",
+           "convertUnit", "viewport", "pushViewport", "upViewport", "popViewport",
+           "plotViewport", "grid.layout", "grid.rect", "grid.points",
+           "grid.lines", "grid.segments", "grid.text",
+           "depth", "grid.xaxis", "grid.yaxis", "grid.newpage", "arrow")
+importFrom("stats",
+           "AIC", "BIC", "anova", "coef", "coefficients", "deviance",
+           "drop.terms",
+           "extractAIC", "fitted", "formula", "getCall", "logLik",
+           "model.frame", "model.matrix", "nobs", "predict", "resid",
+           "residuals", "simulate", "terms", "update", "vcov", "weights",
+           ".checkMFClasses", ".getXlevels", "as.formula",
+           "contr.sum", "contrasts<-", "cov2cor", "delete.response",
+           "gaussian", "glm", "glm.control", "glm.fit", "model.offset",
+           "model.response", "model.weights", "na.omit", "na.pass",
+           "naprint", "nlminb", "pchisq", "plogis", "ppoints",
+           "prcomp", "qlogis", "qnorm", "quantile", "reshape", "rnorm",
+           "runif", "update.formula")
+importFrom("utils", "modifyList")
+importFrom("nlme", "fixef", "ranef", "VarCorr")
+importFrom("rpart", "prune")
+importFrom("numDeriv", "hessian")
+importFrom("ucminf", "ucminf")
+importFrom("zoo", "zoo")
+importFrom("sandwich", "estfun")
+importFrom("strucchange", "gefp", "sctest", "supLM", "catL2BB", "root.matrix")
+
+## Exports
+export(
+  fe, re, vc, ge, ce,
+  adjacent,
+  baseline,
+  cumulative,
+  contr.wsum,
+  cvloss,
+  extract,
+  fixef,
+  prune,
+  prunepath, 
+  ranef,
+  ranefCov,
+  oobloss,
+  splitpath, 
+  VarCorr,
+  neglogLik2,
+  otsplot,
+  otsplot_control,
+  otsplot_filter,
+  olmm,
+  olmm_control,
+  panel_coef,
+  panel_partdep,
+  predecor_control,
+  olmm_estfun,
+  olmm_gefp,
+  tvcm_control,
+  tvcolmm_control,
+  tvcglm_control,
+  tvcm,
+  tvcolmm,
+  tvcglm, 
+  fvcm,
+  fvcolmm,
+  fvcglm,
+  fvcm_control,
+  fvcolmm_control,
+  fvcglm_control,
+  folds_control)
+
+## Exported methods for 'glm' class
+S3method(fixef, glm)
+
+## Exported methods for 'fvcm' class
+S3method(fitted, fvcm)
+S3method(predict, fvcm)
+S3method(plot, fvcm)
+S3method(print, fvcm)
+S3method(oobloss, fvcm)
+S3method(ranef, fvcm)
+
+## Exported methods for 'olmm' class
+S3method(anova, olmm)
+S3method(coef, olmm)
+S3method(coefficients, olmm)
+S3method(deviance, olmm)
+S3method(extractAIC, olmm)
+S3method(fitted, olmm)
+S3method(fixef, olmm)
+S3method(formula, olmm)
+S3method(getCall, olmm)
+S3method(logLik, olmm)
+S3method(model.frame, olmm)
+S3method(model.matrix, olmm)
+S3method(neglogLik2, olmm)
+S3method(nobs, olmm)
+S3method(predict, olmm)
+S3method(print, olmm)
+S3method(ranef, olmm)
+S3method(ranefCov, olmm)
+S3method(resid, olmm)
+S3method(residuals, olmm)
+S3method(simulate, olmm)
+S3method(summary, olmm)
+S3method(print, summary.olmm)
+S3method(terms, olmm)
+S3method(update, olmm)
+S3method(VarCorr, olmm)
+S3method(print, VarCorr.olmm)
+S3method(vcov, olmm)
+S3method(weights, olmm)
+S3method(print, family.olmm)
+S3method(neglogLik2, default)
+
+## Exported methods for 'otsplot' class
+S3method(otsplot, default)
+S3method(print, otsplot)
+
+## Exported methods for 'tvcm' class
+S3method(coef, tvcm)
+S3method(coefficients, tvcm)
+S3method(depth, tvcm)
+S3method(cvloss, tvcm)
+S3method(plot, cvloss.tvcm)
+S3method(print, cvloss.tvcm)
+S3method(extract, tvcm)
+S3method(fitted, tvcm)
+S3method(formula, tvcm)
+S3method(getCall, tvcm)
+S3method(logLik, tvcm)
+S3method(nobs, tvcm)
+S3method(neglogLik2, tvcm)
+S3method(oobloss, tvcm)
+S3method(plot, tvcm)
+S3method(predict, tvcm)
+S3method(print, tvcm)
+S3method(prune, tvcm)
+S3method(prunepath, tvcm)
+S3method(print, prunepath.tvcm)
+S3method(ranef, tvcm)
+S3method(resid, tvcm)
+S3method(residuals, tvcm)
+S3method(splitpath, tvcm)
+S3method(print, splitpath.tvcm)
+S3method(summary, tvcm)
+S3method(weights, tvcm)
+S3method(width, tvcm)
