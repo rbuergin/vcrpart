@@ -1,0 +1,50 @@
+p1 <- person(given = "Reto", family = "B\u00FCrgin", email = "rbuergin@gmx.ch")
+p2 <- person(given = "Gilbert", family = "Ritschard", email = "gilbert.ritschard@unige.ch")
+
+bibentry(
+    bibtype = "Article",
+    title = "Coefficient-Wise Tree-Based Varying Coefficient Regression with vcrpart",
+    author = c(p1, p2),
+    journal = "Journal of Statistical Software", 
+    year = "2017",
+    volume = "80",
+    number = "6",
+    pages = "1--33",
+    doi = "10.18637/jss.v080.i06",
+    textVersion = "B\u00FCrgin, R. and G. Ritschard (2017), Coefficient-Wise Tree-Based Varying Coefficient Regression with vcrpart. Journal of Statistical Software, 80(6), 1-33. doi:10.18637/jss.v080.i06"
+)
+
+bibentry(
+    bibtype = "Article",
+    author = c(p1, p2),
+    title = "Tree-Based Varying-Coefficient Regression for Longitudinal Ordinal Responses",
+    journal = "Computational Statistics & Data Analysis", 
+    year = "2015",
+    volume = "86",
+    pages = "65--80",
+    doi = "10.1016/j.csda.2015.01.003",
+    textVersion = "B\u00FCrgin, R. and G. Ritschard (2015), Tree-Based Varying Coefficient Regression for Longitudinal Ordinal Responses. Computational Statistics & Data Analysis 86, 65-80. doi:10.1016/j.csda.2015.01.003"
+)
+
+bibentry(
+    bibtype = "Article",
+    author = c(p1, p2),
+    title = "A Decorated Parallel Coordinate Plot for Categorical Longitudinal Data",
+    journal = "The American Statistician",
+    year = "2014",
+    volume = "68",
+    pages = "98--103",
+    number = "2",
+    doi = "10.1080/00031305.2014.887591",
+    textVersion = "B\u00FCrgin, R. and G. Ritschard (2014), A Decorated Parallel Coordinate Plot for Categorical Longitudinal Data. The American Statistician 68(2), 98-103. doi:10.1080/00031305.2014.887591",
+    )
+
+bibentry(
+    bibtype = "PhdThesis",
+    author = c(p1),
+    title = "Tree-based methods for moderated regression with application to longitudinal data",
+    doi = "10.13097/archive-ouverte/unige:72616",
+    school = "University of Geneva",
+    year = "2015",
+    textVersion = "B\u00FCrgin, R. A. (2015). Tree-based methods for moderated regression with application to longitudinal data. PhD thesis. University of Geneva."
+)

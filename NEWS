@@ -1,0 +1,271 @@
+Changes in Version 1.0-5 [2024-05-06]
+
+    o   Newest grid.rect() version seems seems to use white as default
+        background (and not transparent as previously). Was a problem in 
+        panel_coef().
+
+    o   Solve new issue with character arguments at Fortran calls.
+
+    o   estfun() and gefp() are not anymore exported as methods for olmm(). estfun.olmm() and estfun.gefp() were renamed to olmm_estfun() and olmm_gefp().
+
+    o   Removed vignette because of warning messages on the size of the pdf.
+
+    o   Documentation of output values of various methods for 'fvcm', 'olmm' and 'tvcm'.
+
+Changes in Version 1.0-4 [2021-04-17]
+
+    o   In R 4.1, length(fix) > 1 in 'olmm_control' caused an 
+        error. Fixed by Gilbert Ritschard.
+        
+    o   Vignette as Rnw file. 
+
+Changes in Version 1.0-3
+
+    o   Fixed bug for option 'numHess = TRUE' of 'olmm_control'.
+    
+    o   Fixed issues with change of class of matrices from R 4.0.0.
+
+    o   Re-added vignette.
+
+Changes in Version 1.0-2
+
+    o   Replace in C-code 'alloca' memory allocations by 'R_alloc' to
+        avoid memory allocation problems, including using 'vmaxget' and
+	'vmaxset'.
+
+    o   Improved two bugs concerning memory overflow.
+    
+Changes in Version 1.0-1
+
+    o   Internal modification for the 'singular.ok' argument of future
+        R versions.
+
+    o   Replaced 'memcpy' calls in C-code with 'for' loops because they
+        were used for small objects.
+
+    o   Improve R-Code for 'alloca' calls (adding 'R_CheckStack()'
+        after calls).
+
+Changes in Version 1.0-0
+
+    o    Added vignette.
+    
+    o    Update references.
+    
+    o    Improve documentation for formulas.
+    
+    o    The 'data' slot of 'tvcm' object newly includes several
+         variables used for fitting. These data are cleaned with
+	 respect to missing values, but no transformations are applied.
+
+    o    In 'fvcolmm_control' the 'alpha' argument has mistakingly been
+         ignored. Bug fix.
+
+    o    Added new warnings for 'tvcglm_control'.
+
+    o    Bug fix: for 'tvcglm_control' and 'tvcolmm_control' the '...'
+         arguments have previously been ignored.
+
+    o    added default for 'minsize' to 'fvcm_control' and 'fvcglm_control'. 
+
+    o    Add new argument 'fitargs' to 'tvcm'. Allows to pass arguments for
+         the fitting function in 'tvcm' and 'fvcm'. This was possible before
+         via the '...', but leads to argument name clashes in some cases. See
+         the help of 'tvcm'.
+
+    o    Improve the help of 'vcpart-formula'.
+
+    o    fixed an unnecessary error case in 'tvcm_folds'.
+
+    o    add check for the response variable in 'olmm'.
+
+    o    bug fix for 'predict.fvcm'.
+
+    o    bug fix in for internal C function 'olmm_setPar'.
+
+Changes in Version 0.4-2
+
+    o    Update of citation info
+
+    o    modified 'olmm_control' for the 'optim' optimizier. Now
+         'BFGS' is set as the default and a warning is shown
+         if a non-gradient based method is chosen while 'numGrad = FALSE'.
+
+    o    Enable option 'sparse' for function 'contr.wsum'.
+
+    o    Improved C-code for olmm. Does not have impacts for users. Please
+         report if any changes appear.
+
+Changes in Version 0.4-1
+
+    o    Changed titles in 'panel_coef', 'tvcm.print' and 'tvcm.summary'
+
+    o    Add '...' to the 'VarCorr' method for 'olmm' objects to resolve
+         the warning since 'nlme' version 3.1-123. Removed 'rdig' argument.
+
+    o    Because of an internal bug the print method for 'fvcm' objects
+         printed always 'Bagging based varying coefficient model', even if
+	 'mtry < Inf'. Bug fixed. Thanks Michel Ballings for the hint.
+
+    o    In cases of 'mtry = Inf' the algorithm returned an error. Now
+         'mtry = Inf' is allowed.
+
+    o    In cases of 'mtry < Inf' the 'print.fvcm' shows now the set 'mtry'
+         parameter.
+
+    o    Improved the 'coef' method for models fitted with 'tvcm', 'tvcglm'
+         or 'tvcolmm'. 'by' variables of 'vc' terms without splits are not
+         anymore assigned to fixed i.e. main effects. 
+
+    o    Corrected internal bug of 'predict.fvcm'. Except for
+         'type = "coef"',
+         and models with 'family = gaussian()' or 'family = cumulative()',
+         predictions gave wrong results. Sorry.
+
+    o    The default setting for 'na.action' on 'tvcolmm', 'tvcglm', 'tvcm'
+         and 'olmm' is set to 'na.action = na.omit'. Thanks to the anonymous
+         referee of JSS.
+
+    o    Added the argument 'fast' to 'tvcglm_control'
+
+Changes in Version 0.3-3
+
+    o    Corrected issues with moderators with name 'x' in 'vc' terms. Thanks
+    	 Jonathan Williams for the hint.
+
+    o    Corrected issues in cases no 'vc' terms are specified in 'tvcm' or 
+         'fvcm'. In these cases there will be a warning message and a linear
+         model as specified in 'fit' will be returned. Correction carries over
+         to 'tvcglm', 'tvcolmm', 'fvcolmm' and 'fvcglm'.
+
+Changes in Version 0.3-3
+
+    o    Replaced 'ptry', 'ntry' and 'vtry' parameters for random
+         selections of the 'fvcm' function by 'mtry', see the 'fvcm_control' 
+ 	 function. 'mtry' specifies the number of random selections of 
+	 combinations of partition, node and variable.
+
+    o    Removed internal bugs of the 'tvcolmm' and 'tvglm' functions. The 
+         changes have no consequences for the users. 
+
+    o    Removed internal bugs in 'fvcm'.
+
+    o    Improved help file of 'fvcm'.
+
+    o    Changed the defaults for 'maxwidth' and 'maxdepth' in 'tvcm_control'
+         from '1e9' to 'Inf'.
+
+    o    Changed default parameters for the number of folds and verbose in 
+         'fvcm_control', 'fvcolmm_control' and 'fvcglm_control'. 
+
+
+Changes in Version 0.3-2
+	
+    o    Changed a default definition for 'formula' of 'olmm'. Terms
+         which are not specified by 'ce' or 'ge' are now always assigned
+         to 'ge' terms. The old revision used a model specific assignement.
+         It is generally best to use the 'ce' and 'ge' terms to get
+         the desired model.
+
+    o    Corrected labels for random effects of 'olmm' objects.
+
+    o    Revision of the 'predict' method for 'olmm'. The new function 
+         implements the three prediction option of Skrondal and 
+         Rabe-Hesketh (2009).
+
+    o    Revised references.
+
+
+Changes in Version 0.3-1
+
+    o    Improvements for 'prunepath' method. 
+
+    o    Moved documentation of 'prunepath' to 'tvcm-assessment'.
+
+    o    Added example for 'prune'.
+
+    o    Internal changes in 'estfun.olmm' and new argument 'center' for 
+         the function 'predecor_control'.
+
+    o    New argument 'fast' for 'tvcm_control' to control whether an
+         approximative or the accurate model is used at exhaustive search.
+
+    o    Corrected bugs in 'tvcm_exsearch_nomToOrd' and 'tvcm_getNumSplits' 
+         which appeared in in special cases.
+
+    o    Improved help manual for 'tvcglm' and 'tvcolmm'.
+
+    o    Revised references.
+
+
+Changes in Version 0.2-3
+
+    o    Added contr.wsum function.
+
+    o    Added 'seed' argument to 'otsplot_control'.
+
+    o    Internal changes for exhaustive search of 'tvcm'.
+
+    o    Improved documentation.
+
+
+Changes in Version 0.2-2
+
+    o    Added seed option to 'tvcm_control'.
+
+    o    The new implementation clearly distinguishes between the two 
+         functions 'tvcolmm' and 'tvcolmm' with separate help files. 
+	 The general function 'tvcm' is still available.
+
+    o    Added convenience function 'tvcolmm_control' and 
+         'tvglm_control'.
+
+    o    Improvement for 'panel_coef': Points and lines surpassing
+         the boxes are now suppressed.
+
+    o    Added variable centering as default for split selection.
+
+    o    Redefinition of tuning parameters for 'tvcm'. The main 
+         tuning parameter is now 'cp'. See the help of 'tvcm' and 
+         'tvcm_control' for details. 
+
+    o    Added 'nimpute' argument for 'tvcm_control'.
+
+    o    Added detail section to the help page of 'tvcm_control'.
+
+    o    Removed AIC table from 'print.tvcm' (AIC and BIC seem not
+         relevant measures for models fitted by 'tvcm').
+
+    o    Added 'PL' data set.
+
+    o    Removed bug for numeric estimation of covariance of 'olmm'
+         objects.
+
+    o    Added 'depth' and 'width' methods.
+
+
+Changes in Version 0.2-1
+
+    o    First CRAN release.
+
+    o    'tvcm' and 'fvcm' allow for multiple 'vc' terms, i.e. 
+         coefficient-specific partitions.
+
+    o    Complete revision of syntaxes, argument names and  default 
+         parameters. R commands for the former version 0.1-14 are 
+         hardly compatibel. Please contact <rbuergin@gmx.ch> 
+         in case of questions.
+
+    o    The default splitting criterion of 'tvcm' was changed from 
+         (old) coefficient constancy tests combined with greedy loss 
+         minimization to (new) exhaustive greedy loss minimization.
+	 Splitting based on the (old) requires to set the
+	 argument 'sctest = TRUE' in 'tvcm_control'.
+
+     o	 The greedy loss reduction minimization stage of 'tvcm' does now 
+         fixate coefficients which are not splitted at the estimates of 
+         the current model. The technique intends acceleration.
+
+     o   Cross-validation is now integrated in the 'tvcm' function.
+
+     o   'cvloss' and 'prune' are parallelized using the 'parallel' package.
