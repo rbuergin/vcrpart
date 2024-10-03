@@ -52,7 +52,7 @@ olmm_control(fit = c("nlminb", "ucminf", "optim"),
   Notice that an additional argument \code{control}, e.g.,
   \code{control = list(trace = 1)}, can be passed access control
   parameters of the optimizers. For arguments, see
-  \command{\link{ucminf}}, \command{\link{nlminb}} or
+  \command{\link[ucminf]{ucminf}}, \command{\link{nlminb}} or
   \command{\link{optim}}.   
 }
 

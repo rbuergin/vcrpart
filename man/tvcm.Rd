@@ -73,10 +73,10 @@ tvcm(formula, data, fit, family,
 
 \value{An object of class \command{\link{tvcm}}. The
     \command{\link{tvcm}} class itself is based on the
-    \command{\link{party}} class of the \pkg{partykit} package. The most
+    \command{\link[partykit]{party}} class of the \pkg{partykit} package. The most
     important slots are:
 
-    \item{node}{an object of class \command{\link{partynode}}.}
+    \item{node}{an object of class \command{\link[partykit]{partynode}}.}
     \item{data}{a \command{\link{data.frame}}. The model frame with all
       variables for partitioning.}
     \item{fitted}{an optional \command{\link{data.frame}} containing at
