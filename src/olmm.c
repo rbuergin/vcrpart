@@ -276,12 +276,12 @@ SEXP olmm_update_marg(SEXP x, SEXP par) {
   double *etaCLM = (double*) NULL,
     *etaRanefCLM = (double*) NULL,
     *sumBL = (double*) NULL,
-    *etaRanef = Calloc(n * nEta, double),
+    *etaRanef = R_Calloc(n * nEta, double),
     *gq_nodes = (double *) R_alloc(q, sizeof(double)),
     *ranefVec = (double *) R_alloc(q, sizeof(double)),
     *ranef = (double *) R_alloc(qEta * nEta, sizeof(double)),
-    *logLikCond_obs = Calloc(n, double),
-    *logLikCond_sbj = Calloc(N, double),
+    *logLikCond_obs = R_Calloc(n, double),
+    *logLikCond_sbj = R_Calloc(N, double),
     *scoreCondVar = (double *) R_alloc(family == 1 ? 2 : nEta,
 				       sizeof(double)),
     *vecRanefTerm = (double *) R_alloc(lenVecRanefCholFac, sizeof(double)),
@@ -291,8 +291,8 @@ SEXP olmm_update_marg(SEXP x, SEXP par) {
     *scoreCond_sbj = (double*) NULL;
 
   if (numGrad == 0) {
-    scoreCond_obs = Calloc(n * nPar, double);
-    scoreCond_sbj = Calloc(N * nPar, double);
+    scoreCond_obs = R_Calloc(n * nPar, double);
+    scoreCond_sbj = R_Calloc(N * nPar, double);
   }
 
   AllocVal(etaRanef, n * nEta, zero);
@@ -314,8 +314,8 @@ SEXP olmm_update_marg(SEXP x, SEXP par) {
   
   switch (family) {
   case 1: 
-    etaCLM = Calloc(n * 2 , double);
-    etaRanefCLM = Calloc(n * 2 , double);
+    etaCLM = R_Calloc(n * 2 , double);
+    etaRanefCLM = R_Calloc(n * 2 , double);
     for (int i = 0; i < n; i++) {
       etaCLM[i] /* lower */
 	= yI[i] > 1 ? eta[n * (yI[i] - 2) + i] : -DBL_MAX;  
@@ -324,7 +324,7 @@ SEXP olmm_update_marg(SEXP x, SEXP par) {
     }
     break;
   case 2: case 3:
-    sumBL = Calloc(n, double);
+    sumBL = R_Calloc(n, double);
     break;
   }
   
@@ -605,14 +605,14 @@ SEXP olmm_update_marg(SEXP x, SEXP par) {
     gq_weight = 1; /* reset integration weight */
   }
 
-  Free(etaRanef);
-  Free(logLikCond_obs);
-  Free(logLikCond_sbj);
-  if (family == 1) Free(etaCLM);
-  if (family == 1) Free(etaRanefCLM);
-  if ((family == 2) | (family == 3)) Free(sumBL);
-  Free(scoreCond_obs);
-  Free(scoreCond_sbj);
+  R_Free(etaRanef);
+  R_Free(logLikCond_obs);
+  R_Free(logLikCond_sbj);
+  if (family == 1) R_Free(etaCLM);
+  if (family == 1) R_Free(etaRanefCLM);
+  if ((family == 2) | (family == 3)) R_Free(sumBL);
+  R_Free(scoreCond_obs);
+  R_Free(scoreCond_sbj);
 
   /* add up score_obs to score_sbj (before computing info matrix!) */
 
@@ -750,15 +750,15 @@ SEXP olmm_update_u(SEXP x) {
   double *etaCLM = (double*) NULL,
     *etaRanefCLM = (double*) NULL,
     *sumBL = (double*) NULL,
-    *etaRanef = Calloc(n * nEta, double),
+    *etaRanef = R_Calloc(n * nEta, double),
     *ranefVec = (double*) R_alloc(q, sizeof(double));
     
   AllocVal(etaRanef, n * nEta, zero);
 
   switch (family) {
   case 1: 
-    etaCLM = Calloc(n * 2 , double);
-    etaRanefCLM = Calloc(n * 2 , double);
+    etaCLM = R_Calloc(n * 2 , double);
+    etaRanefCLM = R_Calloc(n * 2 , double);
     for (int i = 0; i < n; i++) {
       etaCLM[i] /* lower */
 	= yI[i] > 1 ? eta[n * (yI[i] - 2) + i] : -DBL_MAX; 
@@ -767,7 +767,7 @@ SEXP olmm_update_u(SEXP x) {
     }
     break;
   case 2: case 3:
-    sumBL = Calloc(n, double);
+    sumBL = R_Calloc(n, double);
     break;
   }
 
@@ -778,8 +778,8 @@ SEXP olmm_update_u(SEXP x) {
   double *gq_nodes = (double *) R_alloc(q, sizeof(double)),
     gq_weight = 1,
     *ranef = (double *) R_alloc(qEta * nEta, sizeof(double)), 
-    *logLikCond_obs = Calloc(n, double),
-    *logLikCond_sbj = Calloc(N, double);
+    *logLikCond_obs = R_Calloc(n, double),
+    *logLikCond_sbj = R_Calloc(N, double);
     
   for (int k = 0; k < nQP; k++) {
 
@@ -879,12 +879,12 @@ SEXP olmm_update_u(SEXP x) {
   }
 
 
-  Free(etaRanef);
-  Free(logLikCond_obs);
-  Free(logLikCond_sbj);
-  if (family == 1) Free(etaCLM);
-  if (family == 1) Free(etaRanefCLM);
-  if ((family == 2) | (family == 3)) Free(sumBL);
+  R_Free(etaRanef);
+  R_Free(logLikCond_obs);
+  R_Free(logLikCond_sbj);
+  if (family == 1) R_Free(etaCLM);
+  if (family == 1) R_Free(etaRanefCLM);
+  if ((family == 2) | (family == 3)) R_Free(sumBL);
   UNPROTECT(1);
   vmaxset(vmax);
   return uR;
@@ -938,9 +938,9 @@ SEXP olmm_pred_marg(SEXP x, SEXP eta, SEXP W, SEXP n, SEXP pred) {
 
   /* define internal objects */
   vmax = vmaxget();
-  double *etaRanef = Calloc(rn * nEta, double),
+  double *etaRanef = R_Calloc(rn * nEta, double),
     *gq_nodes = (double *) R_alloc(q, sizeof(double)),
-    *predCond = Calloc(rn * J, double),
+    *predCond = R_Calloc(rn * J, double),
     *ranefVec = (double *) R_alloc(q, sizeof(double)),
     *ranef = (double *) R_alloc(qEta * nEta, sizeof(double));
   
@@ -1015,8 +1015,8 @@ SEXP olmm_pred_marg(SEXP x, SEXP eta, SEXP W, SEXP n, SEXP pred) {
     gq_weight = 1; /* reset integration weight */
   }
   
-  Free(etaRanef);
-  Free(predCond);
+  R_Free(etaRanef);
+  R_Free(predCond);
   UNPROTECT(1);
   vmaxset(vmax);
   return rvalR;
@@ -1066,11 +1066,11 @@ SEXP olmm_pred_margNew(SEXP x, SEXP etaNew, SEXP WNew, SEXP subjectNew,
   
   /* define internal objects */
   vmax = vmaxget();
-  double *etaRanefNew = Calloc(rnNew * nEta, double),
-    *etaRanef = Calloc(n * nEta, double),
-    *logLikCond_sbj = Calloc(rnNew, double),
+  double *etaRanefNew = R_Calloc(rnNew * nEta, double),
+    *etaRanef = R_Calloc(n * nEta, double),
+    *logLikCond_sbj = R_Calloc(rnNew, double),
     *gq_nodes = (double *) R_alloc(q, sizeof(double)),
-    *predCond = Calloc(rnNew * J, double),
+    *predCond = R_Calloc(rnNew * J, double),
     *ranefVec = (double *) R_alloc(q, sizeof(double)),
     *ranef = (double *) R_alloc(qEta * nEta, sizeof(double));
   
@@ -1188,10 +1188,10 @@ SEXP olmm_pred_margNew(SEXP x, SEXP etaNew, SEXP WNew, SEXP subjectNew,
     
   }
 
-  Free(logLikCond_sbj);
-  Free(etaRanef);
-  Free(etaRanefNew);
-  Free(predCond);
+  R_Free(logLikCond_sbj);
+  R_Free(etaRanef);
+  R_Free(etaRanefNew);
+  R_Free(predCond);
   UNPROTECT(1);
   vmaxset(vmax);
   return rvalR;

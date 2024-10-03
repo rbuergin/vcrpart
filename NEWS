@@ -1,3 +1,9 @@
+Changes in Version 1.0-6 [2024-10-03]
+
+    o   Replace in C-code 'Calloc' memory allocations by 'R_Calloc' and 'Free' by 
+        'R_Free' by as compiling with _R_USE_STRICT_R_HEADERS_=true will fail
+        in the future.
+    
 Changes in Version 1.0-5 [2024-05-06]
 
     o   Newest grid.rect() version seems seems to use white as default
@@ -6,7 +12,8 @@ Changes in Version 1.0-5 [2024-05-06]
 
     o   Solve new issue with character arguments at Fortran calls.
 
-    o   estfun() and gefp() are not anymore exported as methods for olmm(). estfun.olmm() and estfun.gefp() were renamed to olmm_estfun() and olmm_gefp().
+    o   estfun() and gefp() are not anymore exported as methods for olmm(). 
+        estfun.olmm() and estfun.gefp() were renamed to olmm_estfun() and olmm_gefp().
 
     o   Removed vignette because of warning messages on the size of the pdf.
 
