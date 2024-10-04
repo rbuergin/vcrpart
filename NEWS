@@ -1,4 +1,4 @@
-Changes in Version 1.0-6 [2024-10-03]
+Changes in Version 1.0-6 [2024-10-04]
 
     o   Replace in C-code 'Calloc' memory allocations by 'R_Calloc' and 'Free' by 
         'R_Free' by as compiling with _R_USE_STRICT_R_HEADERS_=true will fail

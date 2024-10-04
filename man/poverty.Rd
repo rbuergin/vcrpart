@@ -55,10 +55,8 @@
   Poverty is defined by a threshold of 2400 Swiss francs per person in
   the household. Specifically, the \code{poverty} variable was retrieved
   from a self-rated ordinal variable with nine categories on household 
-  income and was adjusted by the OECD equivalence scales methodology
-  (see
-  \url{https://www.oecd.org/economy/growth/OECD-Note-EquivalenceScales.pdf})
-  to account for the household size. 
+  income and was adjusted by the OECD equivalence scales methodology to
+  account for the household size.  
 
   The variables \code{Canton}, \code{Gender} and \code{AgeGroup}
   represent the stratification variables of the survey design. 
