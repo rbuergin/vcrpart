@@ -43,7 +43,7 @@
 ## 2014-04-22: implement change in 'form' object
 ## 2013-09-15: Free() commands were added in olmm.c
 ## 2013-09-07: C implementation for updating the marginal Likelihood
-## 	        and predicting random-effects was stabilized by 
+## 	        and predicting random-effects was stabilized by
 ##	        replacing many alloca's by the R built-in function
 ##	        Calloc, which may slow the estimation
 ## 2013-07-27: change 'start' handling and add 'restricted'
@@ -54,7 +54,7 @@
 ##             warnings under correct use and now the slot
 ##             'contrasts' also contains contrasts from the
 ##             model matrix for random effects
-## 2021-04-15: olmm_control, when length(fit) > 1 we set fit as fit[1] 
+## 2021-04-15: olmm_control, when length(fit) > 1 we set fit as fit[1]
 ##             (length(fit) > 1 caused an error in R 4.1). Fixed by GR.
 ##
 ## To do:
@@ -182,14 +182,14 @@ olmm <- function(formula, data, family = cumulative(),
                  offset, contrasts, control = olmm_control(), ...) {
 
     ## check arguments
-    
+
     ## append '...' arguments to control
     cArgs <- list(...)
     ## cArgs <- cArgs[intersect(names(cArgs), names(formals(olmm_control)))]
     cArgsNames <- names(cArgs)
     cArgs <- do.call("olmm_control", cArgs)
     control[cArgsNames] <- cArgs[cArgsNames]
-    
+
     if (control$verbose) cat("* checking arguments ... ")
     mc <- match.call(expand.dots = FALSE)
     stopifnot(inherits(formula, "formula"))
@@ -199,7 +199,7 @@ olmm <- function(formula, data, family = cumulative(),
     if (length(attr(terms(
         as.formula(paste("~", deparse(lhs(formula))))), "term.labels")) > 1L)
         stop("the left.hand of the formula must consist of a single term.")
-    
+
     ## link and family
     if (is.character(family)) {
         family <- get(family, mode = "function", envir = parent.frame())
@@ -233,19 +233,19 @@ olmm <- function(formula, data, family = cumulative(),
     con <- con[which(!unlist(lapply(con, is.null)))]
     if (missing(contrasts)) contrasts <- NULL
     contrasts <- appendDefArgs(contrasts, con)
-    
+
     ## optimizer control option
     optim <- olmm_optim_setup(x = control, env = environment())
     ## control$numGrad <- control$numHess <- is.null(optim$gr)
-    
+
     ## set environment
     env <- if (!is.null(list(...)$env))
                list(...)$env else parent.frame(n = 1L)
-    
+
     ## extract model frames
-    
+
     if (control$verbose) cat("OK\n* extracting model frames ... ")
-    
+
     ## decompose model formula
     if (any(substr(all.vars(formula), 1, 3) == "Eta"))
         stop("'Eta' is a reserved label and cannot be used as ",
@@ -254,10 +254,10 @@ olmm <- function(formula, data, family = cumulative(),
                                 family = family,
                                 env = env)
     if (!is.null(formList$vc)) stop("'vc' terms are not allowed in 'olmm'.")
-    
+
     ## set full model frame
     m <- match(c("data", "subset", "weights", "na.action"), names(mc), 0L)
-    mf <- mc[c(1L, m)] 
+    mf <- mc[c(1L, m)]
     mf$formula <- formList$allTerms
     mf$drop.unused.levels <- TRUE
     mf[[1L]] <- as.name("model.frame")
@@ -271,13 +271,13 @@ olmm <- function(formula, data, family = cumulative(),
         if (nlevels(y) < 2L)
             stop("response variable has less than 2 categories.")
     }
-  
+
     ## extract fixed effect model matrix
     fixefmf$formula <- terms(formList$fe$eta$ce, keep.order = TRUE)
     fixefmfCe <- eval.parent(fixefmf)
     fixefmf$formula <- terms(formList$fe$eta$ge, keep.order = TRUE)
     fixefmfGe <- eval.parent(fixefmf)
-    
+
     conCe <-
         contrasts[intersect(names(contrasts), all.vars(formList$fe$eta$ce))]
     conGe <-
@@ -287,7 +287,7 @@ olmm <- function(formula, data, family = cumulative(),
                        TRUE)
     rownames(X) <- rownames(fullmf)
     X <- olmm_check_mm(X)
-    
+
     ## intercept term
     if (attr(terms(fixefmfCe), "intercept") == 1L) {
         intVar <- colnames(X)[1L]
@@ -301,7 +301,7 @@ olmm <- function(formula, data, family = cumulative(),
             intVar <- intTerms <- NULL
         }
     }
-    
+
     ## extract random effect grouping factor 'subject'
     hasRanef <- TRUE
     subjectName <- all.vars(formList$re$cond)
@@ -317,16 +317,16 @@ olmm <- function(formula, data, family = cumulative(),
         control$nGHQ <- as.integer(1L)
         hasRanef <- FALSE
     }
-    
+
     subject <- fullmf[, subjectName, drop = TRUE]
     if (!is.factor(subject)) stop("subject variable must be a factor")
-    
+
     ## extract random effect model matrix W
     ranefmf$formula <- terms(formList$re$eta$ce, keep.order = TRUE)
     ranefmfCe <- eval.parent(ranefmf)
     ranefmf$formula <- terms(formList$re$eta$ge, keep.order = TRUE)
     ranefmfGe <- eval.parent(ranefmf)
-    
+
     conCe <- contrasts[intersect(names(contrasts),
                                  all.vars(formList$re$eta$ce))]
     conGe <- contrasts[intersect(names(contrasts),
@@ -336,25 +336,25 @@ olmm <- function(formula, data, family = cumulative(),
                        FALSE)
     rownames(W) <- rownames(fullmf)
     W <- olmm_check_mm(W)
-    
+
     ## contrasts
     cons <- append(attr(X, "contrasts"), attr(W, "contrasts"))
     if (!is.null(cons)) cons <- cons[!duplicated(names(cons))]
     if (is.null(cons)) storage.mode(cons) <- "list"
-    
+
     ## vector for dimensions etc.
-    nEta <- if (is.factor(y)) nlevels(y) - 1 else 1 
+    nEta <- if (is.factor(y)) nlevels(y) - 1 else 1
     dims <- as.integer(c(n = nrow(X), N = nlevels(subject), p = nEta * sum(attr(X, "merge") == 1L) + sum(attr(X, "merge") == 2L), pEta = ncol(X), pInt = length(intTerms), pCe = sum(attr(X, "merge") == 1L), pGe = sum(attr(X, "merge") == 2L), q = nEta * sum(attr(W, "merge") == 1L) + sum(attr(W, "merge") == 2L), qEta = ncol(W), qCe = sum(attr(W, "merge") == 1L), qGe = sum(attr(W, "merge") == 2L), J = nEta + 1, nEta = nEta, nPar = nEta * sum(attr(X, "merge") == 1L) + sum(attr(X, "merge") == 2L) + (nEta * sum(attr(W, "merge") == 1L) + sum(attr(W, "merge") == 2L)) * (1L + nEta * sum(attr(W, "merge") == 1L) + sum(attr(W, "merge") == 2L)) / 2L, nGHQ = control$nGHQ, nQP = control$nGHQ^(nEta * sum(attr(W, "merge") == 1L) + sum(attr(W, "merge") == 2L)), family = famNum, link = linkNum, verb = control$verbose, numGrad = control$numGrad, numHess = control$numHess, doFit = control$doFit, hasRanef = hasRanef))
     names(dims) <- c("n", "N", "p", "pEta", "pInt", "pCe", "pGe", "q", "qEta", "qCe", "qGe", "J", "nEta", "nPar", "nGHQ", "nQP", "family", "link", "verb", "numGrad", "numHess", "doFit", "hasRanef")
 
     ## parameter names
     parNames <- list(fixef = c(if (dims["pCe"] > 0) paste("Eta", rep(seq(1L, dims["nEta"], 1), each = dims["pCe"]), ":", rep.int(colnames(X)[attr(X, "merge") == 1L], dims["nEta"]), sep = ""), if (dims["pGe"] > 0) colnames(X)[attr(X, "merge") == 2L]), ranefCholFac = paste("ranefCholFac", 1L:(dims["q"] * (dims["q"] + 1L) / 2L ), sep = ""))
-  
+
     ## set the weights
     if (is.null(model.weights(fullmf))) {
         weights <- as.double(rep.int(1.0, dims["n"]))
         weights_sbj <- as.double(rep.int(1.0, dims["N"]))
-    } else { 
+    } else {
         weights <- model.weights(fullmf)
         weights_sbj <- tapply(weights, subject, unique)
         if (is.list(weights_sbj)) {
@@ -362,13 +362,13 @@ olmm <- function(formula, data, family = cumulative(),
         } else {
             weights_sbj <- as.double(weights_sbj)
         }
-        
+
         if (length(weights_sbj) != dims["N"]) {
             stop("'weights' must be constant for subjects")
         }
         if (any(weights < 0.0)) stop("negative 'weights' are not allowed")
     }
-    
+
     ## set the offset
     if (missing(offset)) offset <- NULL
     if (!is.null(offset) & !is.null(model.offset(fullmf)))
@@ -386,9 +386,9 @@ olmm <- function(formula, data, family = cumulative(),
         if (nrow(offset) != nrow(fullmf))
             offset <- offset[-attr(fullmf, "na.action"), , drop = FALSE]
         if (any(is.na(offset))) stop("'offset' contains NA's.")
-        if (nrow(offset) != dims["n"]) stop("'offset' has wrong dimensions.")    
+        if (nrow(offset) != dims["n"]) stop("'offset' has wrong dimensions.")
     }
-    
+
     ## weights and nodes for the Gauss-Hermite quadrature integration
     if (hasRanef) {
         gh <- gauss.quad(dims["nGHQ"], "hermite")
@@ -399,15 +399,15 @@ olmm <- function(formula, data, family = cumulative(),
         ghx <- matrix(0.0, 1L, 1L)
         ghw <- matrix(1.0, 1L, 1L)
     }
-    
+
     ## elimination matrix for lower triangular matrices
     ranefElMat <- L.matrix(n = dims["q"])
-    
+
     ## Likelihood function
     ll_sbj <- rep.int(0.0, dims["N"])
     names(ll_sbj) <- levels(subject)
     ll <- c(0.0)
-    
+
     ## score function
     score_obs <- matrix(0, dims["n"], dims["nPar"])
     rownames(score_obs) <- rownames(X)
@@ -416,27 +416,27 @@ olmm <- function(formula, data, family = cumulative(),
                         dimnames = list(levels(subject), unlist(parNames)))
     score <- rep.int(0, dims["nPar"])
     names(score) <- unlist(parNames)
-    
+
     ## info matrix
     info <- matrix(0, dims["nPar"], dims["nPar"],
                    dimnames = list(unlist(parNames), unlist(parNames)))
-    
+
     ## linear predictor (without contributions of random effects)
     eta <- matrix(0, dims["n"], dims["nEta"],
                   dimnames = list(rownames(fullmf),
                                   paste("Eta", 1L:dims["nEta"], sep = "")))
-    
+
     ## inital values
-    
+
     if (control$verbose) cat("OK\n* setting inital values ... ")
-    
+
     start <- olmm_start(control$start, dims, parNames, X, W, eta, ranefElMat)
-    
+
     ## restricted
     restr <- rep.int(FALSE, dims["nPar"])
     names(restr) <- unlist(parNames)
     if (dims["family"] == 3L) control$restricted <- NULL
-    
+
     ## check and set 'restr'
     if (!is.null(control$restricted)) {
         stopifnot(is.character(control$restricted))
@@ -444,16 +444,16 @@ olmm <- function(formula, data, family = cumulative(),
             stop(paste("the coefficient(s) ", paste("'", control$restricted[!control$restricted %in% names(restr)], "'", sep = "", collapse = ", "), " in 'restricted' were not found. The coefficient names are ", paste("'", names(restr), "'", sep = "", collapse = ", "), ".", sep = ""))
         restr[control$restricted] <- TRUE
     }
-    
+
     ## xlevels
     xlevels <- .getXlevels(attr(fullmf, "terms"), fullmf)
     if (is.null(xlevels)) storage.mode(xlevels) <- "list"
-    
+
     ## set the transformed random effect matrix
     u <- matrix(0, dims["N"], dims["q"],
                 dimnames = list(levels(subject),
-                                rownames(start$ranefCholFac)))     
-    
+                                rownames(start$ranefCholFac)))
+
     ## get terms and delete environments
     formList <- vcrpart_formula_delEnv(formList)
     terms <- list(feCe = terms(formList$fe$eta$ce, keep.order = TRUE),
@@ -462,11 +462,11 @@ olmm <- function(formula, data, family = cumulative(),
                   reGe = terms(formList$re$eta$ge, keep.order = TRUE))
     environment(formula) <- NULL
     attr(attr(fullmf, "terms"), ".Environment") <- NULL
-    
+
     ## define fit object
-    
+
     if (control$verbose) cat("OK\n* building the model object ... ")
-    
+
     object <- structure(
         list(call = mc,
              frame = fullmf,
@@ -504,30 +504,30 @@ olmm <- function(formula, data, family = cumulative(),
              output = list(),
              converged = FALSE),
         class = "olmm")
-    
+
     ## delete big data blocks
     # rm(list = ls()[!ls() %in% c("dims", "object")]) # commented out this after mail of konstanze.lauseker@wu.ac.at at 2024-05-03
-    
+
     if (dims["doFit"] > 0L) {
-        
+
         ## set fitting evironment
-        
+
         if (dims["verb"] > 0L)
             cat("OK\n* setting up the fitting environment ... ")
-        
+
         ## set start parameters
         object$optim[[1L]] <- object$coefficients
         object$optim[[4L]] <- object$restricted
         ## fit the model
-        
+
         if (dims["verb"] > 0L) cat("OK\n* fitting the model ... ")
-        
+
         if (!is.null(object$optim$control$trace) &&
             object$optim$control$trace > 0L)
             cat("\n")
-        
+
         ## extract the function for fitting the model
-        
+
         FUN <- object$optim$fit
         subs <- which(names(object$optim) == "fit")
         object$optim <- object$optim[-subs]
@@ -536,13 +536,13 @@ olmm <- function(formula, data, family = cumulative(),
             object$output <-
                 suppressWarnings(do.call(FUN, object$optim)))
         object$optim$fit <- FUN
-        
+
         ## overwrite slots
         new <- .Call("olmm_update_marg", object, object$output$par,
                      PACKAGE = "vcrpart")
         object <- modifyList(object, new)
-        
-        ## print messages for opimization
+
+        ## print messages for optimization
         if (dims["verb"] > 0L) {
             cat(paste("OK\n\toptimization time:",
                       signif(systemTime[3L], 3L),
@@ -553,7 +553,7 @@ olmm <- function(formula, data, family = cumulative(),
                 cat(paste("\n\tmessage: ", object$output$message, sep = ""))
             }
         }
-        
+
         ## warnings from optimization
         olmm_optim_warnings(object$output, FUN)
         object$converged <- switch(
@@ -561,13 +561,13 @@ olmm <- function(formula, data, family = cumulative(),
             optim = object$output$convergence == 0,
             nlminb = object$output$convergence == 0,
             ucminf = object$output$convergence %in% c(1, 2, 4))
-        
+
         ## numeric estimate of fisher information
         if (dims["numHess"] == 1L) {
-            
+
             if (dims["verb"] > 0L)
                 cat("\n* computing the approximative hessian matrix ... ")
-            
+
             object$info[] <- # replace the info slot
                 - hessian(
                       func = object$optim[[2L]],
@@ -577,42 +577,42 @@ olmm <- function(formula, data, family = cumulative(),
                       env = object$optim$env)
             if (dims["verb"] > 0L) cat("OK")
         }
-        
+
         if (dims["verb"] > 0L) {
             eigenHess <- eigen(object$info, only.values = TRUE)$values
             condHess <- abs(max(eigenHess) / min(eigenHess))
             cat("\n\tcondition number of Hessian matrix:",
                 format(condHess, digits = 2L, scientific = TRUE))
-        }  
-        
-        ## fit / predict random effects   
-        
+        }
+
+        ## fit / predict random effects
+
         ## compute expected standardized random effects
         if (dims["hasRanef"] > 0) {
             if (dims["verb"] > 0L) cat("\n* predicting random effects ... ")
             object$u <- .Call("olmm_update_u", object, PACKAGE = "vcrpart")
             if (dims["verb"] > 0L) cat("OK")
         }
-    
+
         ## reset environment of estimation equations
         environment(object$optim[[2L]]) <- baseenv()
         if (dims["numGrad"] < 1L)
             environment(object$optim[[3]]) <- baseenv()
-        
+
         if (dims["verb"] > 0L)
             cat("\n* computations finished, return model object\n")
-        
+
     } else {
-        
+
         ## update the object with the current estimates
         new <- .Call("olmm_update_marg", object, object$coefficients,
                      PACKAGE = "vcrpart")
         object <- modifyList(object, new)
         if (dims["hasRanef"] > 0L)
             object$u <- .Call("olmm_update_u", object, PACKAGE = "vcrpart")
-        
+
         if (dims["verb"] > 0L)
             cat("\n* no computations processed, return model object\n")
-    }  
-    return(object) 
+    }
+    return(object)
 }

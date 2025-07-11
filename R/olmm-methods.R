@@ -77,9 +77,9 @@ anova.olmm <- function(object, ...) {
             } else {
                 logical(0)
             }
-    
+
     if (any(modp)) {
-        
+
         ## multiple models
         opts <- dots[!modp]
         mods <- c(list(object), dots[modp])
@@ -117,7 +117,7 @@ anova.olmm <- function(object, ...) {
         attr(val, "heading") <-
             c(header, "Models:", paste(rep(names(mods), times = unlist(lapply(lapply(lapply(calls, "[[", "formula"), deparse), length))), unlist(lapply(lapply(calls, "[[", "formula"), deparse)), sep = ": "))
         return(val)
-        
+
     } else {
         ## single model
         stop("single argument anova for 'olmm' objects not yet implemented")
@@ -129,7 +129,7 @@ coef.olmm <- function(object, which = c("all", "fe"), ...) {
 
     which <- match.arg(which)
     if (which == "fe") return(fixef(object))
-    
+
     dims <- object$dims
     if (object$family$family == "adjacent") {
         T <- diag(dims["nPar"])
@@ -148,7 +148,7 @@ coef.olmm <- function(object, which = c("all", "fe"), ...) {
     }
     if (dims["hasRanef"] == 0L)
         rval <- rval[!grepl("ranefCholFac", names(rval))]
-    
+
     return(rval)
 }
 
@@ -162,7 +162,7 @@ deviance.olmm <- function(object, ...)
 
 predecor_control <- function(impute = TRUE, seed = NULL,
                              symmetric = TRUE, center = FALSE,
-                             reltol = 1e-6, maxit = 250L, minsize = 1L, 
+                             reltol = 1e-6, maxit = 250L, minsize = 1L,
                              include = c("observed", "all"),
                              verbose = FALSE, silent = FALSE) {
     stopifnot(is.logical(impute) && length(impute) == 1L)
@@ -175,7 +175,7 @@ predecor_control <- function(impute = TRUE, seed = NULL,
     include <- match.arg(include)
     stopifnot(is.logical(verbose) && length(verbose) == 1L)
     stopifnot(is.logical(silent) && length(silent) == 1L)
-    return(structure(list(impute = impute, seed = seed, 
+    return(structure(list(impute = impute, seed = seed,
                           symmetric = symmetric, center = center,
                           reltol = reltol, maxit = maxit,
                           minsize = minsize, include = include,
@@ -186,30 +186,30 @@ predecor_control <- function(impute = TRUE, seed = NULL,
 
 olmm_estfun <- function(x, predecor = FALSE, control = predecor_control(),
                         nuisance = NULL, ...) {
-    
+
     ## append '...' arguments to control
     cArgs <- list(...)
     cArgs <- cArgs[intersect(names(cArgs), names(formals(olmm_control)))]
     cArgsNames <- names(cArgs)
     cArgs <- do.call("predecor_control", cArgs)
     control[cArgsNames] <- cArgs[cArgsNames]
-    
+
     if (control$verbose) cat("* extract original scores ... ")
-    
+
     ## check 'x'
     stopifnot(inherits(x, "olmm"))
     Ni <- table(x$subject)
     Nmax <- as.integer(max(Ni))
     xOld <- x # store the original model for restoring at the end
-    
+
     ## check 'predecor'
     if (x$dims["hasRanef"] == 0L) predecor <- FALSE
     stopifnot(is.logical(predecor))
     predecor <- predecor[1L]
-    
+
     ## check 'control'
     stopifnot(inherits(control,"predecor_control"))
-    
+
     ## check 'nuisance'
     if (is.character(nuisance))
       nuisance <- which(colnames(x$score_obs) %in% nuisance)
@@ -220,22 +220,22 @@ olmm_estfun <- function(x, predecor = FALSE, control = predecor_control(),
     nuisance <- sort(union(nuisance, which(x$restricted)))
     parm <- setdiff(parm, nuisance)
     attr <- list() # default attributes
-    
+
     scores <- x$score_obs
-    
+
     if (control$verbose) cat("OK")
-    
+
     ## impute data
-    
-    subsImp <- rep.int(FALSE, nrow(scores))  
+
+    subsImp <- rep.int(FALSE, nrow(scores))
     if (predecor && any(Ni != Nmax)) {
-      
+
       Nimpute <- Nmax - Ni
       subsImp <- c(rep.int(FALSE, x$dims["n"]), rep.int(TRUE, sum(Nimpute)))
       sbjImp <- factor(rep.int(names(Ni), Nimpute), names(Ni))
       ranef <- ranef(x)
       ranefImp <- ranef[rownames(ranef) %in% unique(sbjImp),,drop = FALSE]
-      
+
       ## get predictors from empirical distribution
       yName <- deparse(lhs(formula(x)))
       yLevs <- levels(x$y)
@@ -243,7 +243,7 @@ olmm_estfun <- function(x, predecor = FALSE, control = predecor_control(),
       newFrame[, x$subjectName] <- rep.int(names(Nimpute), Nimpute)
       newX <- x$X[rep.int(1L, sum(Nimpute)),,drop=FALSE]
       newW <- x$W[rep.int(1L, sum(Nimpute)),,drop=FALSE]
-      
+
       ## add imputations to model
       x$frame <- rbind(x$frame, newFrame)
       x$y <- ordered(c(as.character(x$y),
@@ -258,23 +258,23 @@ olmm_estfun <- function(x, predecor = FALSE, control = predecor_control(),
       x$dims["n"] <- nrow(x$frame)
       x$eta <- rbind(x$eta, matrix(0.0, sum(Nimpute), x$dims["nEta"]))
       x$score_obs <- rbind(
-          x$score_obs, matrix(0.0, sum(Nimpute), x$dims["nPar"]))    
+          x$score_obs, matrix(0.0, sum(Nimpute), x$dims["nPar"]))
 
-        ## simulate responses      
+        ## simulate responses
         if (control$verbose) cat("\n* impute scores ... ")
-        
+
         ## set seed
         if (!is.null(control$seed)) set.seed(control$seed)
-        
+
         if (control$impute) {
-            
+
             ## impute predictors
             times <- Nimpute[x$subject[!subsImp]]
             rows <- unlist(tapply(1:sum(Ni), x$subject[!subsImp], function(x) sample(x, times[x[1L]], replace = TRUE)))
             x$frame[subsImp,] <- x$frame[rows,,drop=FALSE]
             x$X[subsImp, ] <- x$X[rows,,drop=FALSE]
             x$W[subsImp, ] <- x$W[rows,,drop=FALSE]
-            
+
             ## draw responses
             subsW <- c(rep(which(attr(xOld$W, "merge") == 1L),
                            x$dims["nEta"]),
@@ -282,72 +282,72 @@ olmm_estfun <- function(x, predecor = FALSE, control = predecor_control(),
             tmatW <- rbind(kronecker(diag(x$dims["nEta"]),
                                      rep(1,x$dims["qCe"])),
                            matrix(1, x$dims["qGe"], x$dims["nEta"]))
-            etaFixef <- x$X[subsImp, ] %*% x$fixef     
+            etaFixef <- x$X[subsImp, ] %*% x$fixef
             etaRanef <- (x$W[subsImp, subsW,drop = FALSE] *
                          ranef[as.integer(x$subject[subsImp])]) %*% tmatW
             eta <- etaFixef + etaRanef
             probs <- x$family$linkinv(eta)
             x$y[subsImp] <- # simulate responses
                 ordered(apply(probs, 1L, function(x) sample(yLevs, 1L, prob = x)), yLevs)
-            
+
             ## recompute scores
             new <-
                 .Call("olmm_update_marg", x,
                       x$coefficients, PACKAGE = "vcrpart")
             x <- modifyList(x, new)
         }
-        
+
         scores <- x$score_obs
-        
+
         if (control$center && max(abs(cSums <- colSums(scores))) > 1e-6)
             scores <- scores -
                 matrix(cSums / nrow(scores),
                        nrow(scores), ncol(scores), byrow = TRUE)
     }
-    
+
     ## drop the nuisance coefficients
     scores <- scores[, parm, drop = FALSE]
-    
-    if (predecor) {    
-        
+
+    if (predecor) {
+
         ## compute transformation matrix
         if (control$verbose) cat("\n* compute transformation matrix ...")
-        
+
         subsT <- if (control$include == "observed")
                      !subsImp else rep(TRUE, nrow(scores))
         T <- olmm_decormat(scores = scores[subsT,,drop = FALSE],
                            subject = x$subject[subsT],
                            control = control)
-        
+
         ## if transformation failed, return raw scores
         if (attr(T, "conv") > 0L) {
-            
+
             if (control$verbose) cat("\n* transforming scores ... ")
-            
+
             ## transformation matrix for one subject
             Ti <- kronecker(matrix(1, Nmax, Nmax) - diag(Nmax), T)
             diag(Ti) <- 1
-            subsOrd <- order(x$subject)      
+            subsOrd <- order(x$subject)
             sTmp <- matrix(c(t(scores[subsOrd,,drop=FALSE])),
                            Nmax * ncol(scores),length(Ni))
             sTmp <- matrix(c(Ti %*% sTmp),
                            nrow(scores), ncol(scores), byrow = TRUE)
             sTmp <- sTmp[order(subsOrd),,drop = FALSE]
             scores[] <- sTmp
-            
+
             if (control$verbose) cat("OK")
         }
         scores <- subset(scores, !subsImp)
         attr(scores, "T") <- T
     }
-    
+
     ## ^hack: recompute old model
     x <- xOld
     new <- .Call("olmm_update_marg", x, x$coefficients, PACKAGE = "vcrpart")
     x <- modifyList(x, new)
-    
+
     if (control$verbose) cat("\n* return negative scores\n")
-    
+
     ## return scores
     return(-scores)
 }
@@ -378,13 +378,13 @@ fixef.olmm <- function(object, which = c("all", "ce", "ge"), ...) {
   }
 
   ## global coefficients
-  if (which %in% c("all", "ge") && dims["pGe"] > 0) { 
+  if (which %in% c("all", "ge") && dims["pGe"] > 0) {
     subs <- seq(from = dims["pCe"] * dims["nEta"] + 1,
                 to = dims["pCe"] * dims["nEta"] + dims["pGe"],
                 by = 1)
     rval <- c(rval, coef[subs])
   }
-  
+
   return(rval)
 }
 
@@ -395,7 +395,7 @@ formula.olmm <- function(x, ...) as.formula(x$formula, env = parent.frame())
 olmm_gefp <- function(object, scores = NULL, order.by = NULL, subset = NULL,
                       predecor = TRUE, parm = NULL, center = TRUE,
                       drop = TRUE, silent = FALSE, ...) {
-  
+
   ## extract scores (if scores is not a matrix)
   if (is.null(scores)) {
     estfunCall <- list(name = as.name("olmm_estfun"),
@@ -406,20 +406,20 @@ olmm_gefp <- function(object, scores = NULL, order.by = NULL, subset = NULL,
     estfunCall[names(dotargs)] <- dotargs
     mode(estfunCall) <- "call"
     scores <- try(eval(estfunCall))
-  } else if (is.function(scores)) {    
+  } else if (is.function(scores)) {
     scores <- scores(object)
   } else if (is.matrix(scores)) {
     if (!silent && !is.null(attr(scores, "predecor")) &&
         as.integer(predecor) != attr(scores, "predecor"))
       warning("'scores' is not pre-decorrelated")
   }
-    
+
   if (!is.matrix(scores)) stop("extracting the score function failed.")
 
   ## set 'order.by'
   if (is.null(order.by)) order.by <- 1:nobs(object)
   if (is.factor(order.by)) order.by <- droplevels(order.by)
-  
+
   ## set subset
   if (!is.null(subset)) {
     if (is.character(subset)) subset <- rownames(scores) %in% subset
@@ -431,17 +431,17 @@ olmm_gefp <- function(object, scores = NULL, order.by = NULL, subset = NULL,
 
   ## create process
   process <- scores[subset[subsScores],,drop=FALSE]
-  cn <- colnames(process) 
+  cn <- colnames(process)
   order.by <- order.by[subset & subsScores]
-  
+
   ## get dimensions
   n <- nrow(scores)
   k <- ncol(scores)
-  
+
   ## if necessary, subtract the column means
   if (center & max(abs(cMeans <- colMeans(process))) > 1e-6)
     process <- process - matrix(cMeans, nrow(process), ncol(process), byrow = TRUE)
-  
+
   ## scale scores by the number of observations
   process <- process / sqrt(n)
 
@@ -460,14 +460,14 @@ olmm_gefp <- function(object, scores = NULL, order.by = NULL, subset = NULL,
     subs <- subs & colnames(process) %in% parm
     mat <- try(chol2inv(chol(root.matrix(J12[subs, subs, drop = FALSE]))), TRUE)
   }
-  
+
   if (inherits(mat, "try-error")) return(mat)
-  
+
   if (!silent && !all(subs))
     warning("covariance matrix is not positive semidefinite. Omit terms: ",
             paste(cn[!subs], collapse = ", "))
 
-  J12Inv[subs, subs] <- mat  
+  J12Inv[subs, subs] <- mat
   process <- t(J12Inv %*% t(process))
 
   ## order and cumulate the process
@@ -490,7 +490,7 @@ olmm_gefp <- function(object, scores = NULL, order.by = NULL, subset = NULL,
                nobs = n,
                call = match.call(),
                fit = NULL,
-               scores = NULL, 
+               scores = NULL,
                fitted.model = getCall(object),
                par = NULL,
                lim.process = "Brownian bridge",
@@ -552,41 +552,41 @@ predict.olmm <- function(object, newdata = NULL,
 
     ## extract data
     type <- match.arg(type) # retrieve type
-    
+
     ## resolve conflicts with the 'ranef' argument
     if (type == "ranef" & !is.null(newdata))
         stop("prediction for random effects for 'newdata' is not ",
              "implemented.")
     if (type == "ranef") return(ranef(object, ...))
-    
+
     if (type == "prob") type <- "response"
     formList <-
         vcrpart_formula(formula(object), object$family) # extract formulas
-    
+
     offset <- list(...)$offset
     subset <- list(...)$subset
     dims <- object$dims
-    
+
     ## checks
     if (!is.null(newdata) && !inherits(newdata, "data.frame"))
         stop("'newdata' must be a 'data.frame'.")
     if (!(inherits(ranef, "logical") | inherits(ranef, "matrix")))
         stop("'ranef' must be a 'logical' or a 'matrix'.")
-    
+
     if (dims["hasRanef"] < 1L) {
         ranef <- FALSE
         formList$re$eta$ge <- as.formula(~ 1)
         formList$re$eta$ce <- as.formula(~ -1)
     }
-    
+
     if (is.null(newdata)) {
-        
+
         ## extract data from the model fit
         X <- model.matrix(object, "fe")
         W <- model.matrix(object, "re")
         subject <- object$subject
         offset <- object$offset
-        
+
         ## check and extract random effects
         if (is.logical(ranef)) {
             if (ranef) ranef <- ranef(object)
@@ -594,9 +594,9 @@ predict.olmm <- function(object, newdata = NULL,
             if (any(dim(ranef) != c(dims["N"], dims["qEta"])))
                 stop("'ranef' matrix has wrong dimensions")
         }
-        
+
     } else {
-        
+
         ## data preparation
         mfForm <- formList$allTerms
         if (!object$subjectName %in% colnames(newdata))
@@ -606,26 +606,26 @@ predict.olmm <- function(object, newdata = NULL,
         xlevels <- .getXlevels(attr(mf, "terms"), mf)
         xlevels <- xlevels[names(xlevels) %in%  all.vars(Terms)]
         xlevels <- xlevels[names(xlevels) != object$subjectName]
-    
+
         newdata <- as.data.frame(model.frame(Terms, newdata,
                                              na.action = na.action,
                                              xlev = xlevels))
-        
+
         if (!is.null(cl <- attr(Terms, "dataClasses")))
-            .checkMFClasses(cl, mf)   
-        
+            .checkMFClasses(cl, mf)
+
         ## extract fixed effect model matrix from newdata
         X <- olmm_merge_mm(model.matrix(terms(formList$fe$eta$ce, keep.order = TRUE), newdata, attr(object$X, "contrasts")[intersect(all.vars(formList$fe$eta$ce), names(attr(object$X, "contrasts")))]), model.matrix(terms(formList$fe$eta$ge, keep.order = TRUE), newdata, attr(object$X, "contrasts")[intersect(all.vars(formList$fe$eta$ge), names(attr(object$X, "contrasts")))]), TRUE)
         rownames(X) <- rownames(newdata)
 
         ## delete columns of dropped terms
         X <- X[, colnames(object$X), drop = FALSE]
-        
+
         if (is.null(offset))
             offset <- matrix(0.0, nrow(X), dims["nEta"])
-        
+
         if (is.logical(ranef) && ranef) {
-            
+
             if (object$subjectName %in% colnames(newdata)) {
                 subjLevs <- unique(newdata[, object$subjectName])
                 ranef <- matrix(0.0, length(subjLevs), ncol(object$u),
@@ -648,15 +648,15 @@ predict.olmm <- function(object, newdata = NULL,
                                     colnames(object$u)))
             }
         }
-        
-        if (is.matrix(ranef) && ncol(ranef) != ncol(object$u)) 
+
+        if (is.matrix(ranef) && ncol(ranef) != ncol(object$u))
             stop("random effects matrix has wrong dimensions")
-        
+
         ## random effects
         if (object$subjectName %in% colnames(newdata)) {
-            
+
             subject <- factor(newdata[, object$subjectName])
-            
+
       if (is.matrix(ranef)) {
           if (any(!levels(subject) %in% rownames(ranef))) {
               stop(paste("random effects missing for subjects",
@@ -666,17 +666,17 @@ predict.olmm <- function(object, newdata = NULL,
           ## !!! has problems with ids = ""
           ranef <- ranef[rownames(ranef) %in% levels(subject),,drop = FALSE]
       }
-            
+
             subject <- factor(subject,
                               levels = unique(c(levels(object$subject),
                                                 levels(subject))))
-            
+
         } else {
-            
+
             subject <- factor(paste("New", 1:nrow(X), sep = ""))
-            
+
         }
-        
+
         ## extract model formulas
         W <- olmm_merge_mm(model.matrix(terms(
             formList$re$eta$ce, keep.order = TRUE),
@@ -686,7 +686,7 @@ predict.olmm <- function(object, newdata = NULL,
             FALSE)
         rownames(W) <- rownames(newdata)
     }
-    
+
     if (!is.null(subset)) {
         X <- X[subset, , drop = FALSE]
         W <- W[subset, , drop = FALSE]
@@ -696,19 +696,19 @@ predict.olmm <- function(object, newdata = NULL,
             ranef <-
                 ranef[rownames(ranef) %in% levels(subject), , drop = FALSE]
     }
-    
+
     yLevs <- levels(object$y)
     if (nrow(X) > 0) {
-        
+
         ## compute linear predictor
         eta <- offset + X %*% object$fixef
-        
+
         ## predict marginal ...
         if (is.logical(ranef) && !ranef &
             type %in% c("response", "class")) {
-            
+
             if (any(subject %in% levels(object$subject))) {
-                
+
                 ## cluster-averaged expectation (works also if person is
                 ## not present)
                 probs <- matrix(0, nrow(X), ncol(eta) + 1L)
@@ -717,29 +717,29 @@ predict.olmm <- function(object, newdata = NULL,
                 probs <-
                     .Call("olmm_pred_margNew", object, eta, W, subject,
                           nrow(X), probs, PACKAGE = "vcrpart")
-                
+
             } else {
-                
-                ## population-averaged expectation 
+
+                ## population-averaged expectation
                 probs <- matrix(0, nrow(X), ncol(eta) + 1L)
                 colnames(probs) <- levels(object$y)
                 rownames(probs) <- rownames(X)
                 probs <-
                     .Call("olmm_pred_marg", object, eta, W, nrow(X), probs,
                           PACKAGE = "vcrpart")
-                
+
             }
-            
-            
+
+
         } else {
             ## or conditional expected probabilities (or linear predictor)
-            
+
             subsW <- c(rep(which(attr(W, "merge") == 1L), dims["nEta"]),
                        which(attr(W, "merge") == 2L))
             tmatW <- rbind(kronecker(diag(dims["nEta"]),
                                      rep.int(1,dims["qCe"])),
                            matrix(1, dims["qGe"], dims["nEta"]))
-            
+
             ## extend linear predictor
             if (is.matrix(ranef))
                 eta <- eta +
@@ -747,26 +747,26 @@ predict.olmm <- function(object, newdata = NULL,
                      ranef[as.character(subject),,drop=FALSE]) %*% tmatW
             rownames(eta) <- rownames(X)
             colnames(eta) <- colnames(object$eta)
-            
+
             if (type == "link") return(eta)
-            
+
             probs <- object$family$linkinv(eta)
             colnames(probs) <- yLevs
             rownames(probs) <- rownames(X)
         }
-        
+
         if (type == "response") {
-            
+
             ## return probabilites
             rval <- probs
         } else if (type == "class") {
-            
+
             ## return most probable category
             rval <- apply(probs, 1, which.max)
             rval <- ordered(yLevs[rval], levels = yLevs)
             names(rval) <- rownames(X)
         }
-        
+
     } else { # useful for predict.tvcm
         if (type == "response") {
             rval <- matrix(, 0, dims["J"], dimnames = list(NULL, yLevs))
@@ -781,23 +781,23 @@ predict.olmm <- function(object, newdata = NULL,
 print.olmm <- function(x, etalab = c("int", "char", "eta"), ...) {
 
     etalab <- match.arg(etalab)
-    
+
     so <- summary.olmm(x, silent = TRUE)
-    
+
     if (length(so$methTitle) > 0) cat(so$methTitle, "\n\n")
     if (length(so$family) > 0)
         cat(" Family:", so$family$family, so$family$link, "\n")
     if (length(so$formula) > 0) cat("Formula:", so$formula, "\n")
     if (length(so$data) > 0) cat("   Data:", so$data, "\n")
     if (length(so$subset) > 0) cat(" Subset:", so$subset ,"\n")
-    
+
     if (length(so$na.action) > 0L) { cat("\n"); cat(so$na.action, "\n"); }
-    
+
   if (length(so$AICtab) > 0) {
       cat("\nGoodness of fit:\n")
       print(so$AICtab, ...)
   }
-    
+
     if (length(so$REmat) > 0) {
         cat("\nRandom effects:\n")
         print.VarCorr.olmm(olmm_rename(
@@ -811,7 +811,7 @@ print.olmm <- function(x, etalab = c("int", "char", "eta"), ...) {
     text <- so$feMatGe[, 1]; names(text) <- rownames(so$feMatGe);
     print(text, ...)
     }
-    
+
     if (length(so$feMatCe) > 0 && nrow(so$feMatCe) > 0) {
         cat("\nCategory-specific fixed effects:\n")
         text <- so$feMatCe[, 1]; names(text) <- rownames(so$feMatCe);
@@ -833,14 +833,14 @@ ranef.olmm <- function(object, norm = FALSE, ...) {
 ranefCov.olmm <- function(object, ...) {
 
     dims <- object$dims
-    
+
     ## transformation for the adjacent-categories model
     if (object$family$family == "adjacent" & dims["qCe"] > 0) {
-        
+
         ranefCholFac <- rval <- object$ranefCholFac
-        
+
         ## row-wise subtraction of category-specific effects
-        
+
         for (i in 1L:dims["qCe"]) {
             subs <- seq(i, dims["qCe"] * dims["nEta"], dims["qCe"])
             for (j in 1L:(dims["nEta"] - 1L)) {
@@ -848,16 +848,16 @@ ranefCov.olmm <- function(object, ...) {
                     ranefCholFac[subs[j + 1L], ]
             }
         }
-        
+
         for (i in 1L:(dims["nEta"] - 1L)) {
             rval[dims["qCe"]*(i-1)+1:dims["qCe"], ] <-
                 ranefCholFac[dims["qCe"]*(i-1L)+1:dims["qCe"], ] -
                 ranefCholFac[dims["qCe"]*i+1L:dims["qCe"], ]
         }
         return(rval %*% t(rval))
-        
+
     } else {
-        
+
         ## cumulative-link model or baseline-category model
         return(object$ranefCholFac %*% t(object$ranefCholFac))
     }
@@ -892,7 +892,7 @@ simulate.olmm <- function(object, nsim = 1, seed = NULL,
 
     dotArgs <- list(...)
     if (!is.null(seed)) set.seed(seed)
-    if (!exists(".Random.seed", envir = .GlobalEnv)) runif(1) 
+    if (!exists(".Random.seed", envir = .GlobalEnv)) runif(1)
     RNGstate <- .Random.seed
     dotArgs$type <- "response"
     if (is.logical(ranef) && ranef) {
@@ -904,7 +904,7 @@ simulate.olmm <- function(object, nsim = 1, seed = NULL,
                                 nrow = nlevels(subject), ncol = ncol(ranef),
                                 dimnames =
                                     list(levels(subject), colnames(ranef)))
-                ranef <- ranef %*% t(object$ranefCholFac)       
+                ranef <- ranef %*% t(object$ranefCholFac)
             } else {
                 ranef <- ranef[rownames(ranef) %in%
                                levels(subject),,drop = FALSE]
@@ -938,28 +938,28 @@ summary.olmm <- function(object, etalab = c("int", "char", "eta"),
 
     etalab <- match.arg(etalab)
     dims <- object$dims
-    
+
     ## goodness of fit measures
     lLik <- logLik(object)
     AICtab <- data.frame(AIC = AIC(lLik),
                          BIC = BIC(lLik),
                          logLik = as.vector(lLik),
                          row.names = "")
-    
+
     ## fixed-effect coefficients
     fixef <- fixef(object)
-    
+
     ## fixed-effect coefficient-covariance matrix
     vcov <- try(vcov(object), silent = TRUE)
     validVcov <- !inherits(vcov, "try-error") && min(diag(vcov)) > 0
     if (!silent && !validVcov)
         warning("computation of variance-covariance matrix failed")
-    
+
     ## global fixed effects
     if (dims["pGe"] > 0) {
         subs <- seq(dims["pCe"] * dims["nEta"] + 1L,
                     dims["pCe"] * dims["nEta"] + dims["pGe"], 1L)
-        feMatGe <- 
+        feMatGe <-
             cbind("Estimate" = fixef[subs],
                   "Std. Error" = rep.int(NaN, length(subs)),
                   "z value" = rep.int(NaN, length(subs)))
@@ -967,11 +967,11 @@ summary.olmm <- function(object, etalab = c("int", "char", "eta"),
             feMatGe[, 2L] <- sqrt(diag(vcov)[subs])
             feMatGe[, 3L] <- feMatGe[, 1L] / feMatGe[, 2L]
         }
-        
+
     } else { # empty matrix
         feMatGe <- matrix(, 0L, 3L, dimnames = list(c(), c("Estimate", "Std. Error", "z value")))
     }
-    
+
     ## category-specific fixed effects
     if (dims["pCe"] > 0L) {
         subs <- seq(1L, dims["pCe"] * dims["nEta"], 1L)
@@ -986,7 +986,7 @@ summary.olmm <- function(object, etalab = c("int", "char", "eta"),
     } else { # empty matrix
         feMatCe <- matrix(, 0L, 3L, dimnames = list(c(), c("Estimate", "Std. Error", "z value")))
     }
-    
+
     ## random effects
     if (dims["hasRanef"] > 0L) {
         VarCorr <- VarCorr(object)
@@ -995,7 +995,7 @@ summary.olmm <- function(object, etalab = c("int", "char", "eta"),
             matrix(, 0L, 3L,
                    dimnames = list(c(), c("Variance", "StdDev", "")))
     }
-    
+
     ## title
     methTitle <- "Linear"
     if (dims["hasRanef"] > 0L) methTitle <- paste(methTitle, "Mixed")
@@ -1004,13 +1004,13 @@ summary.olmm <- function(object, etalab = c("int", "char", "eta"),
         methTitle <- paste(methTitle, " fit by Marginal Maximum\n",
                            "Likelihood with Gauss-Hermite Quadrature",
                            sep = "")
-    
+
     na.action <- naprint(attr(model.frame(object), "na.action"))
     na.action <- if (na.action == "") character() else paste("(", na.action, ")", sep = "")
     call <- getCall(object)
-    
+
     yLevs <- if (is.factor(object$y)) levels(object$y) else 1L
-    
+
     ## return a 'summary.olmm' object
     return(structure(
         list(methTitle = methTitle,
@@ -1032,21 +1032,21 @@ summary.olmm <- function(object, etalab = c("int", "char", "eta"),
 
 print.summary.olmm <- function(x, ...) {
 
-    args <- appendDefArgs(list(...), x$dotargs)  
-    
+    args <- appendDefArgs(list(...), x$dotargs)
+
     if (length(x$methTitle) > 0L) cat(x$methTitle, "\n\n")
     if (length(x$family) > 0L) cat(" Family:",
                                    x$family$family, x$family$link, "\n")
     if (length(x$formula) > 0L) cat("Formula:", x$formula, "\n")
     if (length(x$data) > 0L) cat("   Data:", x$data, "\n")
     if (length(x$subset) > 0L) cat(" Subset:", x$subset ,"\n")
-    
+
     if (length(x$AICtab) > 0L) {
         cat("\nGoodness of fit:\n")
     args$x <- x$AICtab
         do.call("print", args)
     }
-  
+
     if (length(x$REmat) > 0L) {
         cat("\nRandom effects:\n")
         args$x <- olmm_rename(x$REmat, x$yLevs, x$family, x$etalab)
@@ -1054,15 +1054,15 @@ print.summary.olmm <- function(x, ...) {
         cat(sprintf("Number of obs: %d, subjects: %d\n",
                     x$dims["n"], x$dims["N"]))
     }
-    
+
     if (length(x$na.action) > 0L) cat(x$na.action, "\n")
-    
-    if (length(x$feMatGe) > 0 && nrow(x$feMatGe) > 0L) {   
+
+    if (length(x$feMatGe) > 0 && nrow(x$feMatGe) > 0L) {
         cat("\nGlobal fixed effects:\n")
         args$x <- x$feMatGe
         do.call("printCoefmat", args)
     }
-    
+
   if (length(x$feMatCe) > 0 && nrow(x$feMatCe) > 0L) {
       cat("\nCategory-specific fixed effects:\n")
       args$x <- olmm_rename(x$feMatCe, x$yLevs, x$family, x$etalab)
@@ -1098,7 +1098,7 @@ update.olmm <- function(object, formula., evaluate = TRUE, ...) {
             call <- c(as.list(call), extras[!existing])
             call <- as.call(call)
         }
-    }  
+    }
     if (evaluate)
         eval(call, parent.frame())
     else call
@@ -1106,7 +1106,7 @@ update.olmm <- function(object, formula., evaluate = TRUE, ...) {
 
 
 VarCorr.olmm <- function(x, sigma = 1., ...) {
-            
+
     ## create formatted output according to VarCorr
     RECovMat <- ranefCov(x)
     REmat <- cbind(Variance = diag(RECovMat),
@@ -1121,9 +1121,9 @@ VarCorr.olmm <- function(x, sigma = 1., ...) {
 print.VarCorr.olmm <- function(x, ...) { # S3 method
 
     rval <- format(x, ...)
-    
+
     if (nrow(rval) > 1L) {
-        
+
         ## prettify Corr matrix
         Corr <- rval[, 3L:ncol(rval)]
         Corr[upper.tri(Corr)] <- ""
@@ -1133,11 +1133,11 @@ print.VarCorr.olmm <- function(x, ...) { # S3 method
         colnames(Corr) <- c("Corr", rep.int("", nrow(Corr) - 2L))
         rval <- cbind(rval[, 1L:2L, drop = FALSE], Corr)
     } else {
-        
+
         ## random intercept models need no correlation terms
         rval <- rval[, 1L:2L, drop = FALSE]
     }
-    
+
     ## print the output
     if (!is.null(attr(x, "title"))) {
         cat(attr( x, "title" ), "\n")
@@ -1154,15 +1154,15 @@ vcov.olmm <- function(object, ...) {
     info <- object$info
     if (dims["hasRanef"] == 0L)
         info <- info[1L:dims["p"], 1:dims["p"]]
-    
+
     ## extract inverse of negative info-matrix
-    rval <- chol2inv(chol(-info)) 
+    rval <- chol2inv(chol(-info))
     dimnames(rval) <- dimnames(info)
-    
+
     ## parameter transformation for adjacent-category models
     if (object$family$family == "adjacent") {
-        
-        ## matrix T with partial derivates of transformation 
+
+        ## matrix T with partial derivates of transformation
         T <- diag(nrow(rval))
         subsRows <- seq(1, dims["pCe"] * (dims["nEta"] - 1L), 1L)
         subsCols <- seq(dims["pCe"] + 1L,
@@ -1172,20 +1172,20 @@ vcov.olmm <- function(object, ...) {
         } else {
             diag(T[subsRows, subsCols]) <- c(-1.0)
         }
-        subsRows <- seq(dims["pCe"] + 1L,
-                        dims["pCe"] * dims["nEta"], 1L)
-        subsCols <- seq(1,dims["pCe"] * dims["nEta"], 1L)
-        if (length(subsRows) == 1L) {
-            T[subsRows, subsCols] <- c(-1.0)
-        } else {
-            diag(T[subsRows, subsCols]) <- c(-1.0)
-        }
-    
+        # subsRows <- seq(dims["pCe"] + 1L,
+        #                 dims["pCe"] * dims["nEta"], 1L)
+        # subsCols <- seq(1,dims["pCe"] * dims["nEta"], 1L)
+        # if (length(subsRows) == 1L) {
+        #     T[subsRows, subsCols] <- c(-1.0)
+        # } else {
+        #     diag(T[subsRows, subsCols]) <- c(-1.0)
+        # }
+
         ## transform covariance-matrix
         rval <- T %*% rval %*% t(T)
     dimnames(rval) <- dimnames(info)
     }
-    
+
     return(rval)
 }
 
