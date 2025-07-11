@@ -74,7 +74,7 @@ folds_control <- function(type = c("kfold", "subsampling", "bootstrap"),
                           K = ifelse(type == "kfold", 5, 100),
                           prob = 0.5, weights = c("case", "freq"),
                           seed = NULL) {
-    if ("bootstrapping" %in% type) type <- "bootstrap"
+    if ("bootstrapping" %in% type) type <- "bootstrap" # for backward compatibility
     type <- match.arg(type)
     stopifnot(is.numeric(K) && length(K) == 1L)
     if (round(K) < 1L) stop("'K' must be a positive number.")
@@ -134,7 +134,7 @@ tvcm_folds <- function(object, control) {
     freq <- switch(weights,
                    case = rep(1, nobs(object)),
                    freq = weights(object))
-    if (weights == "freq" && any(!freq == round(freq)))
+    if (weights == "freq" && any(abs(freq - round(freq)) > .Machine$double.eps))
         stop("some of the weights are not integers.")
     
     if (is.null(subject)) subject <- factor(rep(1:length(freq), freq))
@@ -152,7 +152,7 @@ tvcm_folds <- function(object, control) {
     }
     
     if (!exists(".Random.seed", envir = .GlobalEnv)) runif(1)
-    oldSeed <- get(".Random.seed", mode="numeric", envir=globalenv())
+    oldSeed <- get(".Random.seed", mode = "numeric", envir = globalenv())
     if (!is.null(seed)) set.seed(seed)
     RNGstate <- .Random.seed
     
