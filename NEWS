@@ -1,18 +1,41 @@
+Changes in Version 1.0-7 [2025-08-26]
+
+    o   Fixed incorrect ordering in the variance-covariance matrix for adjacent
+        category models. Affected only this model in previous package versions.
+
+    o   Improved simulate() method for 'olmm' objects. Added a new argument
+        'ranef.simulate' to explicitely specify whether random effects should be
+        simulated. The change results a slightly different behaviour compared
+        to earlier versions. First, random effects are now simulated by default
+        because of the default 'ranef.simulate = TRUE'. Second, if argument
+        'ranef = TRUE' is combined with 'ranef.simulate = FALSE', then random
+        effects of new subjects are set to 0, which is consistent with the
+        behaviour of the 'predict.olmm' function and the new argument
+        terminology.
+
+    o   Added option for running likelihood ratio tests for models fitted with
+        olmm() using parametric bootstrap. See the anova() method for olmm().
+
+    o   Added new function olmm_overwritePar() for overwriting coefficients of
+        models fitted with olmm() objects, including automatically updating the
+        likelihood and estimates for random effects. This function may be
+        interesting for advanced bootstrap procedures.
+
 Changes in Version 1.0-6 [2024-10-04]
 
-    o   Replace in C-code 'Calloc' memory allocations by 'R_Calloc' and 'Free' by 
+    o   Replace in C-code 'Calloc' memory allocations by 'R_Calloc' and 'Free' by
         'R_Free' by as compiling with _R_USE_STRICT_R_HEADERS_=true will fail
         in the future.
-    
+
 Changes in Version 1.0-5 [2024-05-06]
 
     o   Newest grid.rect() version seems seems to use white as default
-        background (and not transparent as previously). Was a problem in 
+        background (and not transparent as previously). Was a problem in
         panel_coef().
 
     o   Solve new issue with character arguments at Fortran calls.
 
-    o   estfun() and gefp() are not anymore exported as methods for olmm(). 
+    o   estfun() and gefp() are not anymore exported as methods for olmm().
         estfun.olmm() and estfun.gefp() were renamed to olmm_estfun() and olmm_gefp().
 
     o   Removed vignette because of warning messages on the size of the pdf.
@@ -21,15 +44,15 @@ Changes in Version 1.0-5 [2024-05-06]
 
 Changes in Version 1.0-4 [2021-04-17]
 
-    o   In R 4.1, length(fix) > 1 in 'olmm_control' caused an 
+    o   In R 4.1, length(fix) > 1 in 'olmm_control' caused an
         error. Fixed by Gilbert Ritschard.
-        
-    o   Vignette as Rnw file. 
+
+    o   Vignette as Rnw file.
 
 Changes in Version 1.0-3
 
     o   Fixed bug for option 'numHess = TRUE' of 'olmm_control'.
-    
+
     o   Fixed issues with change of class of matrices from R 4.0.0.
 
     o   Re-added vignette.
@@ -41,7 +64,7 @@ Changes in Version 1.0-2
 	'vmaxset'.
 
     o   Improved two bugs concerning memory overflow.
-    
+
 Changes in Version 1.0-1
 
     o   Internal modification for the 'singular.ok' argument of future
@@ -56,11 +79,11 @@ Changes in Version 1.0-1
 Changes in Version 1.0-0
 
     o    Added vignette.
-    
+
     o    Update references.
-    
+
     o    Improve documentation for formulas.
-    
+
     o    The 'data' slot of 'tvcm' object newly includes several
          variables used for fitting. These data are cleaned with
 	 respect to missing values, but no transformations are applied.
@@ -73,7 +96,7 @@ Changes in Version 1.0-0
     o    Bug fix: for 'tvcglm_control' and 'tvcolmm_control' the '...'
          arguments have previously been ignored.
 
-    o    added default for 'minsize' to 'fvcm_control' and 'fvcglm_control'. 
+    o    added default for 'minsize' to 'fvcm_control' and 'fvcglm_control'.
 
     o    Add new argument 'fitargs' to 'tvcm'. Allows to pass arguments for
          the fitting function in 'tvcm' and 'fvcm'. This was possible before
@@ -122,7 +145,7 @@ Changes in Version 0.4-1
 
     o    Improved the 'coef' method for models fitted with 'tvcm', 'tvcglm'
          or 'tvcolmm'. 'by' variables of 'vc' terms without splits are not
-         anymore assigned to fixed i.e. main effects. 
+         anymore assigned to fixed i.e. main effects.
 
     o    Corrected internal bug of 'predict.fvcm'. Except for
          'type = "coef"',
@@ -140,7 +163,7 @@ Changes in Version 0.3-3
     o    Corrected issues with moderators with name 'x' in 'vc' terms. Thanks
     	 Jonathan Williams for the hint.
 
-    o    Corrected issues in cases no 'vc' terms are specified in 'tvcm' or 
+    o    Corrected issues in cases no 'vc' terms are specified in 'tvcm' or
          'fvcm'. In these cases there will be a warning message and a linear
          model as specified in 'fit' will be returned. Correction carries over
          to 'tvcglm', 'tvcolmm', 'fvcolmm' and 'fvcglm'.
@@ -148,12 +171,12 @@ Changes in Version 0.3-3
 Changes in Version 0.3-3
 
     o    Replaced 'ptry', 'ntry' and 'vtry' parameters for random
-         selections of the 'fvcm' function by 'mtry', see the 'fvcm_control' 
- 	 function. 'mtry' specifies the number of random selections of 
+         selections of the 'fvcm' function by 'mtry', see the 'fvcm_control'
+ 	 function. 'mtry' specifies the number of random selections of
 	 combinations of partition, node and variable.
 
-    o    Removed internal bugs of the 'tvcolmm' and 'tvglm' functions. The 
-         changes have no consequences for the users. 
+    o    Removed internal bugs of the 'tvcolmm' and 'tvglm' functions. The
+         changes have no consequences for the users.
 
     o    Removed internal bugs in 'fvcm'.
 
@@ -162,12 +185,12 @@ Changes in Version 0.3-3
     o    Changed the defaults for 'maxwidth' and 'maxdepth' in 'tvcm_control'
          from '1e9' to 'Inf'.
 
-    o    Changed default parameters for the number of folds and verbose in 
-         'fvcm_control', 'fvcolmm_control' and 'fvcglm_control'. 
+    o    Changed default parameters for the number of folds and verbose in
+         'fvcm_control', 'fvcolmm_control' and 'fvcglm_control'.
 
 
 Changes in Version 0.3-2
-	
+
     o    Changed a default definition for 'formula' of 'olmm'. Terms
          which are not specified by 'ce' or 'ge' are now always assigned
          to 'ge' terms. The old revision used a model specific assignement.
@@ -176,8 +199,8 @@ Changes in Version 0.3-2
 
     o    Corrected labels for random effects of 'olmm' objects.
 
-    o    Revision of the 'predict' method for 'olmm'. The new function 
-         implements the three prediction option of Skrondal and 
+    o    Revision of the 'predict' method for 'olmm'. The new function
+         implements the three prediction option of Skrondal and
          Rabe-Hesketh (2009).
 
     o    Revised references.
@@ -185,19 +208,19 @@ Changes in Version 0.3-2
 
 Changes in Version 0.3-1
 
-    o    Improvements for 'prunepath' method. 
+    o    Improvements for 'prunepath' method.
 
     o    Moved documentation of 'prunepath' to 'tvcm-assessment'.
 
     o    Added example for 'prune'.
 
-    o    Internal changes in 'estfun.olmm' and new argument 'center' for 
+    o    Internal changes in 'estfun.olmm' and new argument 'center' for
          the function 'predecor_control'.
 
     o    New argument 'fast' for 'tvcm_control' to control whether an
          approximative or the accurate model is used at exhaustive search.
 
-    o    Corrected bugs in 'tvcm_exsearch_nomToOrd' and 'tvcm_getNumSplits' 
+    o    Corrected bugs in 'tvcm_exsearch_nomToOrd' and 'tvcm_getNumSplits'
          which appeared in in special cases.
 
     o    Improved help manual for 'tvcglm' and 'tvcolmm'.
@@ -220,11 +243,11 @@ Changes in Version 0.2-2
 
     o    Added seed option to 'tvcm_control'.
 
-    o    The new implementation clearly distinguishes between the two 
-         functions 'tvcolmm' and 'tvcolmm' with separate help files. 
+    o    The new implementation clearly distinguishes between the two
+         functions 'tvcolmm' and 'tvcolmm' with separate help files.
 	 The general function 'tvcm' is still available.
 
-    o    Added convenience function 'tvcolmm_control' and 
+    o    Added convenience function 'tvcolmm_control' and
          'tvglm_control'.
 
     o    Improvement for 'panel_coef': Points and lines surpassing
@@ -232,9 +255,9 @@ Changes in Version 0.2-2
 
     o    Added variable centering as default for split selection.
 
-    o    Redefinition of tuning parameters for 'tvcm'. The main 
-         tuning parameter is now 'cp'. See the help of 'tvcm' and 
-         'tvcm_control' for details. 
+    o    Redefinition of tuning parameters for 'tvcm'. The main
+         tuning parameter is now 'cp'. See the help of 'tvcm' and
+         'tvcm_control' for details.
 
     o    Added 'nimpute' argument for 'tvcm_control'.
 
@@ -255,22 +278,22 @@ Changes in Version 0.2-1
 
     o    First CRAN release.
 
-    o    'tvcm' and 'fvcm' allow for multiple 'vc' terms, i.e. 
+    o    'tvcm' and 'fvcm' allow for multiple 'vc' terms, i.e.
          coefficient-specific partitions.
 
-    o    Complete revision of syntaxes, argument names and  default 
-         parameters. R commands for the former version 0.1-14 are 
-         hardly compatibel. Please contact <rbuergin@gmx.ch> 
+    o    Complete revision of syntaxes, argument names and  default
+         parameters. R commands for the former version 0.1-14 are
+         hardly compatibel. Please contact <rbuergin@gmx.ch>
          in case of questions.
 
-    o    The default splitting criterion of 'tvcm' was changed from 
-         (old) coefficient constancy tests combined with greedy loss 
+    o    The default splitting criterion of 'tvcm' was changed from
+         (old) coefficient constancy tests combined with greedy loss
          minimization to (new) exhaustive greedy loss minimization.
 	 Splitting based on the (old) requires to set the
 	 argument 'sctest = TRUE' in 'tvcm_control'.
 
-     o	 The greedy loss reduction minimization stage of 'tvcm' does now 
-         fixate coefficients which are not splitted at the estimates of 
+     o	 The greedy loss reduction minimization stage of 'tvcm' does now
+         fixate coefficients which are not splitted at the estimates of
          the current model. The technique intends acceleration.
 
      o   Cross-validation is now integrated in the 'tvcm' function.

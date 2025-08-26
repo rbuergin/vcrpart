@@ -3,21 +3,21 @@
 \alias{olmm-control}
 \alias{olmm_control}
 
-\title{Control parameters for \command{\link{olmm}}.} 
+\title{Control parameters for \command{\link{olmm}}.}
 
 \description{
-  Various parameters that control aspects for \command{\link{olmm}}.  
+  Various parameters that control aspects for \command{\link{olmm}}.
 }
 
 \usage{
-olmm_control(fit = c("nlminb", "ucminf", "optim"), 
-             doFit = TRUE, numGrad = FALSE, 
+olmm_control(fit = c("nlminb", "ucminf", "optim"),
+             doFit = TRUE, numGrad = FALSE,
              numHess = numGrad, nGHQ = 7L,
              start = NULL, restricted = NULL, verbose = FALSE, ...)
 }
 
 \arguments{
- \item{fit}{character string. The name of the function to be used for the 
+ \item{fit}{character string. The name of the function to be used for the
     optimization. Can be one of \code{"nlminb"}, \code{"ucminf"}, \code{"optim"}}
   \item{doFit}{logical scalar. When \code{FALSE} an unfitted
     \command{\link{olmm}} object is returned.}
@@ -26,7 +26,7 @@ olmm_control(fit = c("nlminb", "ucminf", "optim"),
   \item{numHess}{logical scalar. Indicates whether the Hess matrix for
     the variance-covariance matrix should be estimated numerically,
     which is an approximation of the observed Fisher information. Must
-    be \code{TRUE} if \code{numGrad} is \code{TRUE}. See details.} 
+    be \code{TRUE} if \code{numGrad} is \code{TRUE}. See details.}
   \item{nGHQ}{a positive integer specifying the number of quadrature
     points for the approximation of the marginal Likelihood by numerical
     integration.}
@@ -38,7 +38,7 @@ olmm_control(fit = c("nlminb", "ucminf", "optim"),
     adjacent category models.}
   \item{verbose}{logical scalar. If \code{TRUE} verbose output is
     generated during the optimization of the parameter estimates.}
-  \item{...}{further arguments to be passed to \code{fit}.} 
+  \item{...}{further arguments to be passed to \code{fit}.}
 }
 
 \details{
@@ -53,7 +53,7 @@ olmm_control(fit = c("nlminb", "ucminf", "optim"),
   \code{control = list(trace = 1)}, can be passed access control
   parameters of the optimizers. For arguments, see
   \command{\link[ucminf]{ucminf}}, \command{\link{nlminb}} or
-  \command{\link{optim}}.   
+  \command{\link{optim}}.
 }
 
 \value{

@@ -33,10 +33,12 @@
 \title{Methods for \command{\link{olmm}} objects}
 
 \description{Standard methods for computing on \command{\link{olmm}}
-  objects.} 
+  objects.}
 
 \usage{
-\method{anova}{olmm}(object, ...)
+\method{anova}{olmm}(object, ...,
+        boot = FALSE, boot.nsim = 199, boot.type = c("parametric"),
+        boot.mc.cores = 1)
 
 \method{coef}{olmm}(object, which = c("all", "fe"), ...)
 
@@ -49,20 +51,28 @@
 
 \method{ranef}{olmm}(object, norm = FALSE, ...)
 
-\method{ranefCov}{olmm}(object, ...) 
+\method{ranefCov}{olmm}(object, ...)
 
 \method{simulate}{olmm}(object, nsim = 1, seed = NULL,
-         newdata = NULL, ranef = TRUE, ...)
+         newdata = NULL, ranef = TRUE, ranef.simulate = TRUE,...)
 
 \method{terms}{olmm}(x, which = c("fe-ce", "fe-ge", "re-ce", "re-ge"), ...)
 
 \method{VarCorr}{olmm}(x, sigma = 1., ...)
 
 \method{weights}{olmm}(object, level = c("observation", "subject"), ...)
+
 }
 
 \arguments{
   \item{object, x}{an \command{\link{olmm}} object.}
+  \item{boot}{single logical. Whether or not performing bootstrap.}
+  \item{boot.nsim}{single integer. Number of bootstrap iterations.}
+  \item{boot.type}{type of bootstrap. Currently, only parametric bootstrap is
+    available (\code{boot.type = "parametric"}). See details.}
+  \item{boot.mc.cores}{single integer. The number of cpus used for bootstrap
+    computations using the \command{\link{mclapply}} function of the
+    \pkg{parallel} package. This may not work for Windows computers.}
   \item{which}{optional character string. For  \command{\link{coef}} and
     \command{\link{fixef}}, it indicates whether \code{"all"}
     coefficients, the fixed effects \code{"fe"}, the category-specific
@@ -70,10 +80,10 @@
     fixed effects \code{"ge"} (i.e. proportional odds) should be
     extracted. For \code{model.matrix} it indicates whether the model
     matrix of the fixed- (\code{"fe"}) or the random effects (\code{"re"})
-    should be extracted.} 
+    should be extracted.}
   \item{level}{character string. Whether the results should be on the
     observation level (\code{level = "observation"}) or on the subject
-    level (\code{level = "subject"}).} 
+    level (\code{level = "subject"}).}
   \item{norm}{logical. Whether residuals should be divided by their
     standard deviation.}
   \item{nsim}{number of response vectors to simulate.  Defaults to 1.}
@@ -83,45 +93,63 @@
   \item{ranef}{either a logical or a matrix (see
     \command{\link{predict.olmm}}). Whether the simulated responses should
     be conditional on random effects. If \code{TRUE}, the \code{newdata}
-    data frame must contain the subject identification
-    variable. Further, if all subjects in \code{newdata} are in
-    \code{object}, the simulation will be based on the estimated random
-    effects as obtained with \command{\link{ranef}}. If any subject in
-    \code{newdata} is not in \code{object} the random effects are
-    simulated.}
-  \item{sigma}{ignored but obligatory argument from original generic.} 
+    data frame must contain the subject identification variable.
+    If \code{ranef} is set to \code{TRUE} combined with
+    \code{ranef.simulate = FALSE}, then the estimated random effects are used
+    for simulation. In these cases, value 0 is used as random effects for new
+    subjects, i.e. subjects that are not known for the estimated model. If
+    \code{ranef.simulate = TRUE}, then simulated random effects are used, see
+    below. For user specific settings, use the option of assigning
+    a matrix. Note that \code{ranef = FALSE} results simulated data based on
+    population-averaged response probabilities, which might not be meaningful
+    in any situation.}
+  \item{ranef.simulate}{single logical. Whether random effects should be
+    simulated according to the model assumtions. If so, then estimated random
+    effects will be ignored.}
+  \item{sigma}{ignored but obligatory argument from original generic.}
   \item{...}{potential further arguments passed to methods.}
 }
 
 \details{
-  \command{\link{anova}} implements log-likelihood ratio tests for model  
-  comparisons, based on the marginal likelihood. At the time being, 
-  at least two models must be assigned.
-  
+  The function \command{\link{anova}} performs likelihood ratio tests for
+  comparing statistical models, based on their marginal likelihoods. Currently,
+  at least two models must be provided for comparison. To enable parametric
+  bootstrap, set \code{boot = TRUE} and specify the number of simulations using
+  \code{boot.nsim}, for example \code{boot.nsim = 999}. To speed up
+  computations, you can enable parallel processing by setting
+  \code{boot.mc.cores} to a value greater than \code{1}. Note that parallel
+  computing may not be supported on Windows systems (see
+  \command{\link{mclapply}} for details). The implemented parametric bootstrap
+  procedure is based on the data provided for estimating the model. It generates
+  synthetic datasets by simulating random effects and response variables using
+  the parameter estimates from the fitted models.
+
   \command{\link{neglogLik2}} returns the marginal maximum likelihood of the
-  fitted model times minus 2. 
+  fitted model times minus 2.
 
   \command{\link{ranefCov}} extracts the variance-covariance matrix of
   the random effects. Similarly, \command{\link{VarCorr}} extracts the
   estimated variances, standard deviations and correlations of the
-  random effects.  
+  random effects.
 
   \command{\link{resid}} extracts the residuals of Li and Sheperd
   (2012). By default, the marginal outcome distribution is used to
   compute these residuals. The conditional residuals can be computed by
-  assigning \code{ranef = TRUE} as a supplementary argument.   
+  assigning \code{ranef = TRUE} as a supplementary argument.
 
-  \command{\link{simulate}} simulates ordinal responses based on the
-  input model. 
-  
+  \command{\link{simulate}} simulates responses based on the
+  input model. Make sure that the arguments \code{ranef} and \code{ranef.simulate}
+  are set appropriately. By default, responses are simulated conditionally on
+  simulated random effects.
+
   Further, undocumented methods are \command{\link{deviance}},
   \command{\link{extractAIC}}, \command{\link{fitted}},
   \command{\link{formula}}, \command{\link{getCall}},
   \command{\link{logLik}}, \command{\link{model.frame}},
-  \command{\link{nobs}}, \command{\link{update}}, \command{\link{vcov}}.  
+  \command{\link{nobs}}, \command{\link{update}}, \command{\link{vcov}}.
 
-  The \command{\link{anova}} implementation is based on codes of the 
-  \pkg{lme4} package. The authors are grateful for these codes. 
+  The \command{\link{anova}} implementation is based on codes of the
+  \pkg{lme4} package. The authors are grateful for these codes.
 }
 
 \value{
@@ -132,25 +160,25 @@
   \command{\link{fixef}}, \command{\link{fixef.glm}} and
   \command{\link{fixef.olmm}} methods return named \code{numeric}
   vectors. See also \command{\link{coef}} and
-  \command{\link{coefficients}}. 
+  \command{\link{coefficients}}.
 
   The \command{\link{deviance.olmm}} method returns a single numeric,
   see also \command{\link{deviance}}.
 
   The \command{\link{formula.olmm}} method extracts the model formula,
   which is an object of class \code{formula}. See also
-  \command{\link{formula}}. 
+  \command{\link{formula}}.
 
   The \command{\link{getCall.olmm}} method extracts the call for fitting
   the model, which is an object of class \code{call}. See also
-  \command{\link{call}}. 
-  
+  \command{\link{call}}.
+
   The \command{\link{logLik.olmm}} method returns an object of class
   \code{logLik}, which is a single numeric with a few attributes. See
   also \command{\link{logLik}}.
 
   The \command{\link{neglogLik2}} and \command{\link{neglogLik2.olmm}}
-  methods return a single numeric.  
+  methods return a single numeric.
 
   The \command{\link{model.frame.olmm}} and
   \command{\link{model.matrix.olmm}} methods return the model frame and
@@ -166,7 +194,7 @@
   return an object of class
   \code{VarCorr.olmm}. \command{\link{print.VarCorr.olmm}} returns an
   object of class \code{VarCorr.olmm}.
-  
+
   The \command{\link{resid.olmm}} and \command{\link{residuals.olmm}}
   methods return a numeric vector.
 
@@ -178,7 +206,7 @@
 
   The \command{\link{update.olmm}} method will update and (by default)
   re-fit a model. It returns an object of class \code{olmm}. See also
-  \command{\link{update}}. 
+  \command{\link{update}}.
 
   The \command{\link{vcov.olmm}} method extracts a \code{matrix} with
   the variances and covariances of the fixed effects of the model. See
@@ -195,8 +223,8 @@
   ed.). New Jersey, USA: John Wiley & Sons.
 
   Tutz, G. (2012). \emph{Regression for Categorical Data}. New York,
-  USA: Cambridge Series in Statistical and Probabilistic Mathematics. 
-  
+  USA: Cambridge Series in Statistical and Probabilistic Mathematics.
+
   Li, C. and B. E. Sheperd (2012). A New Residual for Ordinal
   Outcomes, \emph{Biometrika}, \bold{99}(2), 437--480.
 
@@ -206,7 +234,7 @@
 }
 
 \seealso{\command{\link{olmm}}, \command{\link{predict.olmm}},
-  \command{\link{olmm_gefp}}} 
+  \command{\link{olmm_gefp}}}
 
 \examples{
 ## --------------------------------------------------------- #
@@ -223,8 +251,9 @@ schizo$id <- droplevels(schizo$id)
 
 ## fit two alternative models for the 'schizo' data
 model.0 <- olmm(imps79o ~ tx + sqrt(week) + re(1|id), schizo)
-model.1 <- olmm(imps79o ~ tx + sqrt(week)+tx*sqrt(week)+re(1|id),schizo)
+model.1 <- olmm(imps79o ~ tx + sqrt(week) + tx * sqrt(week) + re(1|id), schizo)
 anova(model.0, model.1)
+# anova(model.0, model.1, boot = TRUE, boot.nsim = 499) # new bootstrap option (slow!)
 
 ## simulate responses
 ## ------------------
@@ -232,7 +261,7 @@ anova(model.0, model.1)
 ## simulate responses based on estimated random effects
 simulate(model.0, newdata = schizo[1, ], ranef = TRUE, seed = 1)
 simulate(model.0, newdata = schizo[1, ], seed = 1,
-         ranef = ranef(model.0)[schizo[1, "id"],,drop=FALSE])
+         ranef = ranef(model.0)[schizo[1, "id"], , drop=FALSE])
 ## simulate responses based on simulated random effects
 newdata <- schizo[1, ]
 newdata$id <- factor("123456789")

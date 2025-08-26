@@ -24,7 +24,7 @@
 ## olmm_start:           set initial values
 ## olmm_mergeMm:         merge the predictor-variable and predictor-invariant
 ##                       model matrices
-##                     
+##
 ## gcauchy:              derivate of dcauchy
 ## glogis:               derivate of dlogis
 ## gnorm:                derivate of dnorm
@@ -44,14 +44,17 @@
 ## olmm_decormat:        computes the transformation matrix for
 ##                       removing the intra-subject
 ##                       correlation of ML scores.
+## olmm_overwritePar:    overwrite coefficients and update likelihood and
+##                       random effects
 ##
 ## Modifications:
+## 2025-08-11: add new function 'olmm_overwritePar'
 ## 2020-02-04: modify checks for classes (newly use function 'inherits')
-## 2016-11-03: Changes to 'olmm_fn' and 'olmm_gn' for new C-code.
+## 2016-11-03: changes to 'olmm_fn' and 'olmm_gn' for new C-code.
 ## 2016-10-31: implementation of new C-code.
 ## 2014-09-08: partial substitution of 'rep' by 'rep.int'
 ## 2014-09-07: updated descriptions for undocumented functions
-## 
+##
 ## To do:
 ## - replace ranefChol fac initial value with covariance matrix
 ## - add multiple family arguments
@@ -105,11 +108,11 @@ olmm_gr <- function(par, restricted, env) {
 ##'
 ##' @param x       argument 'optim' of 'olmm' call
 ##' @param numGrad argument 'numGrad' of 'olmm' call
-##' @param env     environment of the optimization 
+##' @param env     environment of the optimization
 ##'
 ##' @return A prepared list to be assigned to the eval command
 ##'    invoking the optimization (using the eval function).
-olmm_optim_setup <- function(x, env = parent.frame()) {  
+olmm_optim_setup <- function(x, env = parent.frame()) {
 
   numGrad <- x$numGrad
   x <- x[!names(x) %in% c("start", "restricted")]
@@ -120,17 +123,17 @@ olmm_optim_setup <- function(x, env = parent.frame()) {
                fit = x$fit)
   rval <- append(rval, x[intersect(names(formals(rval$fit)), names(x))])
   if (rval$fit == "nlminb") names(rval)[1:3] <- names(formals(nlminb)[1:3])
-  
+
   ## set environment for objective function and gradient
   environment(rval[[2]]) <- env
   if (!numGrad) environment(rval[[3]]) <- env
-  
+
   return(rval)
 }
 
 
 olmm_optim_warnings <- function(output, FUN) {
-  
+
   if (FUN == "optim") {
     switch(as.character(output$convergence),
            "1" = warning("Stopped by small step (xtol)."),
@@ -141,18 +144,18 @@ olmm_optim_warnings <- function(output, FUN) {
            "52" = warning("Error from 'L-BFGS-B'."),
            NULL)
   }
-  
+
   if (FUN == "nlminb") {
     if (output$convergence != 0) warning(output$message)
   }
-  
+
   if (FUN == "ucminf") {
-    
+
     switch(as.character(output$convergence),
            "2" =
            if (output$info["maxgradient"] > 1e-3)
            warning("Stopped by small step (xtol)."),
-           "3" = 
+           "3" =
            warning("Stopped by function evaluation limit (maxeval)."),
            "4" =
            if (output$info["maxgradient"] > 1e-3)
@@ -191,7 +194,7 @@ olmm_coefShortLabs <- function(object) {
   ## abbreviations for Choleski factors
   q <- object$dims["q"]
   abbReCF <- paste("reCF", 1:(q * (q + 1L) / 2L), sep = "")
-  
+
   return(c(abbCe, abbGe, abbReCF))
 }
 
@@ -201,7 +204,7 @@ olmm_coefShortLabs <- function(object) {
 ##' model matrix of predictor invariant effects
 ##'
 ##' @param x a model matrix for predictor-variable effects.
-##' @param y a model matrix for predictor-invariant effects. 
+##' @param y a model matrix for predictor-invariant effects.
 ##'
 ##' @return A model matrix.
 olmm_merge_mm <- function(x, y, deleteIntY = TRUE) {
@@ -232,16 +235,16 @@ olmm_merge_mm <- function(x, y, deleteIntY = TRUE) {
 ##'
 ##' @return A model matrix.
 olmm_check_mm <- function(x) {
-  
+
   qr.x <- qr(x, LAPACK = FALSE)
   rank <- qr.x$rank
-  
+
   ## automated drops
   if (rank < ncol(x)) {
-      
+
     warning("design matrix appears to be column rank-deficient ",
             "so dropping some coefs")
-    
+
     dropterms <- function(x, keep) {
       rval <- x[, keep, drop = FALSE]
       attr(rval, "assign") <- attr(x, "assign")[keep]
@@ -254,16 +257,16 @@ olmm_check_mm <- function(x) {
       }
       return(rval)
     }
-   
+
     subs <- qr.x$pivot[1:qr.x$rank]
     x <- dropterms(x, subs)
-    
+
     if (rank != qr(x, LAPACK = FALSE)$rank)
       stop("determination of full column rank design matrix failed")
   } else {
 
     attr(x, "orig.colnames") <- colnames(x)
-  } 
+  }
   storage.mode(x) <- "double"
   return(x)
 }
@@ -294,43 +297,43 @@ olmm_start <- function(start, dims, parNames, X, W, eta, ranefElMat) {
     if (!all(names(start) %in% unlist(parNames)))
       start <- start[names(start) %in% unlist(parNames)]
       }
-  
+
   ## set fixed effects
-  
+
   ## default values
   intDef <- switch(as.character(dims["family"]),
                    "1" = qlogis(ppoints(dims["nEta"])),
                    rep.int(0.0, dims["nEta"]))
   fixef <- c(matrix(c(rep.int(intDef, dims["pInt"]), rep.int(0.0, dims["nEta"] * (dims["pCe"] - dims["pInt"]))), dims["pCe"], dims["nEta"], byrow = TRUE), rep.int(0.0, dims["pGe"]))
   names(fixef) <- parNames$fixef
-  
+
   ## overwrite with 'start'
   subs <- intersect(names(fixef), names(start))
   fixef[subs] <- start[subs]
-  
+
   ## make a fixed effects matrix
   fixef <- rbind(matrix(as.numeric(fixef[1:(dims["pCe"] * dims["nEta"])]), dims["pCe"], dims["nEta"], byrow = FALSE), if (dims["pGe"] > 0) matrix(rep(as.numeric(fixef[(dims["pCe"] * dims["nEta"] + 1):dims["p"]]), each = dims["nEta"]), dims["pGe"], dims["nEta"], byrow = TRUE) else NULL)
   rownames(fixef) <- colnames(X)
   colnames(fixef) <-  colnames(eta)
-  
+
   if (dims["family"] == 3L && dims["pCe"] > 0L) {
-    
+
     ## transform adjacent category parameters into baseline category
     ## parameters
     T <- 1 * lower.tri(diag(dims["nEta"]), diag = TRUE)
     fixef[1:dims["pCe"],] <- fixef[1:dims["pCe"],] %*% T
   }
-  
+
   ## set random effect variance components
-  
+
   ## default values
   ranefCholFac <- c(ranefElMat %*%  c(diag(dims["q"])))
   names(ranefCholFac) <- parNames$ranefCholFac
-  
+
   ## overwrite with 'start'
   subs <- intersect(names(ranefCholFac), names(start))
   ranefCholFac[subs] <- start[subs]
-  
+
   ## make a matrix
   ranefCholFac <-
     matrix(t(ranefElMat) %*% ranefCholFac, dims["q"], dims["q"])
@@ -338,21 +341,21 @@ olmm_start <- function(start, dims, parNames, X, W, eta, ranefElMat) {
   tmp <- c((if (dims["qCe"] > 0) paste("Eta", rep(seq(1, dims["nEta"], 1), each = dims["qCe"]), ":", rep.int(colnames(W)[attr(W, "merge") == 1], dims["nEta"]), sep = "") else NULL), (if (dims["qGe"] > 0) colnames(W)[attr(W, "merge") == 2] else NULL))
   rownames(ranefCholFac) <- tmp
   colnames(ranefCholFac) <- tmp
-  
+
   if (dims["family"] == 3 && dims["qCe"] > 0) {
-    
+
     ## transform adjacent category parameters into baseline category
     ## parameters
     for (i in 1:dims["qCe"]) {
       subs <- seq(i, dims["qCe"] * dims["nEta"], dims["qCe"])
       for (j in 1:(dims["nEta"] - 1)) {
         ranefCholFac[subs[j], ] <-
-          colSums(ranefCholFac[subs[j:dims["nEta"]], ]) 
+          colSums(ranefCholFac[subs[j:dims["nEta"]], ])
       }
     }
     ranefCholFac <- t(chol(ranefCholFac %*% t(ranefCholFac)))
   }
-  
+
   ## coefficients
   coefficients <- numeric()
   if (dims["pCe"] > 0L) coefficients <- fixef[1:dims["pCe"],]
@@ -371,7 +374,7 @@ olmm_start <- function(start, dims, parNames, X, W, eta, ranefElMat) {
 ##'
 ##' @param scores  the scores of the model
 ##' @param subject the subject vector
-olmm_scoreVar <- function(scores, subject)  
+olmm_scoreVar <- function(scores, subject)
     return(crossprod(scores) / nrow(scores))
 
 
@@ -382,7 +385,7 @@ olmm_scoreVar <- function(scores, subject)
 ##' @param subject a factor vector that assigns entries in
 ##'    'scores' to the grouping factor.
 olmm_scoreCovWin <- function(scores, subject) {
-  
+
   Ni <- table(subject)
   return((crossprod(apply(scores, 2, tapply, subject, sum)) -
           crossprod(scores)) / sum(Ni * (Ni - 1)))
@@ -396,7 +399,7 @@ olmm_scoreCovWin <- function(scores, subject) {
 ##' @param subject a factor vector that assigns entries in
 ##'    'scores' to the grouping factor.
 olmm_scoreCovBet <- function(scores, subject) {
-  
+
   Ni <- table(subject)
   return(-crossprod(apply(scores, 2, tapply, subject, sum)) /
          (nrow(scores)^2 - nrow(scores) - sum(Ni * (Ni - 1))))
@@ -423,7 +426,7 @@ olmm_f_decormat <- function(T, Tindex, sVar, sCovWin, sCovBet, Nmax) {
     sCovBet +
         (Nmax - 1) * sCovBet %*% t(T) + (Nmax - 1) * T %*% t(sCovBet) +
         (Nmax - 1)^2 * T %*% sCovBet %*% t(T)
-  
+
   rval <- adjScoreCovWin - adjScoreCovBet
   subs <- which(!duplicated(c(Tindex)) & c(Tindex) != 0)
   return(c(rval[subs]))
@@ -458,7 +461,7 @@ olmm_g_decormat <- function(T, Tindex, sVar, sCovWin, sCovBet, Nmax) {
     gAdjScoreCovBet <-
       (Nmax - 1) * sCovBet %*% t(ind)  + (Nmax - 1) * ind %*% sCovBet +
            2 * val * (Nmax - 1)^2 * ind %*% sCovBet %*% t(ind)
-    
+
     rval[, i] <- (gAdjScoreCovWin + gAdjScoreCovBet)[subs]
   }
   return(rval)
@@ -474,7 +477,7 @@ olmm_g_decormat <- function(T, Tindex, sVar, sCovWin, sCovBet, Nmax) {
 ##' @param levels  the response levels.
 ##' @param family  an object of class 'family.olmm'
 ##' @param etalab  character string. Allowed are "int", "char" or
-##'    "eta". 
+##'    "eta".
 ##'
 ##' @return An object of the same class as 'x' but with new
 ##'    labels for category-specific coefficients.
@@ -487,7 +490,7 @@ olmm_rename <- function(x, levels, family,
 
     if (etalab == "int") seq_along(levels)
     rename <- function(names) {
-      names <- strsplit(names, ":") 
+      names <- strsplit(names, ":")
       names <- lapply(names, function(name) {
         if (substr(name[1L], 1, 3) == "Eta") {
           cat <- as.numeric(substr(name[1L], 4, nchar(name[1])))
@@ -517,8 +520,8 @@ olmm_rename <- function(x, levels, family,
       if (!is.null(names(x))) names(x) <- rename(names(x))
     }
   }
-  
-  return(x)  
+
+  return(x)
 }
 
 
@@ -536,24 +539,24 @@ olmm_rename <- function(x, levels, family,
 ##' @return A list with the frame and model matrices of the simulated
 ##'    predictors
 olmm_decormat <- function(scores, subject, control = predecor_control()) {
-  
+
   stopifnot(inherits(control, "predecor_control"))
   Nmax <- max(table(subject))
-  
+
   ## estimate variances and covariances
   sVar <- olmm_scoreVar(scores, subject)
   sCovWin <- olmm_scoreCovWin(scores, subject)
   sCovBet <- olmm_scoreCovBet(scores, subject)
-  
+
   ## reduce to coefficient subset if intended
   k <- ncol(scores)
-  
+
   ## set initial values
   T <- matrix(0, k, k, dimnames = list(rownames(sVar), colnames(sVar)))
   Tindex <- matrix(0, k, k, dimnames = list(rownames(sVar), colnames(sVar)))
-  subs <- if (control$symmetric) lower.tri(T, TRUE) else matrix(TRUE, k, k)  
+  subs <- if (control$symmetric) lower.tri(T, TRUE) else matrix(TRUE, k, k)
   if (control$minsize > 0L) # omit off-diagonal terms which are zero
-    subs[crossprod(apply(abs(scores) > 0, 2, tapply, subject, sum)) <= control$minsize & crossprod(abs(scores) > 0) <= control$minsize] <- FALSE  
+    subs[crossprod(apply(abs(scores) > 0, 2, tapply, subject, sum)) <= control$minsize & crossprod(abs(scores) > 0) <= control$minsize] <- FALSE
   nPar <- sum(subs)
   Tindex[subs] <- 1:nPar
   if (control$symmetric)
@@ -561,7 +564,7 @@ olmm_decormat <- function(scores, subject, control = predecor_control()) {
   par <- rep.int(0, nPar)
   fEval <- rep.int(Inf, nPar)
   nit <- 0; error <- FALSE; eps <- 2 * control$reltol;
-  
+
   ## optimize by Newton's algorithm
   while (!error && nit < control$maxit && eps >= control$reltol) {
     nit <- nit + 1
@@ -578,8 +581,8 @@ olmm_decormat <- function(scores, subject, control = predecor_control()) {
     }
     if (inherits(par, "try-error") || eps > 1e100 || is.nan(eps))
       error <- TRUE
-  } 
-  
+  }
+
   ## check convergence
   if (nit >= control$maxit | error) {
     mess <- paste("optimization not converged: nit =", nit,
@@ -591,12 +594,31 @@ olmm_decormat <- function(scores, subject, control = predecor_control()) {
       cat("\noptimization converged: nit =", nit,
           "max|diff/f| =", format(eps, digits = 3, scientific = TRUE), "\n")
   }
-  
+
   attr(T, "conv") <- as.integer((nit != control$maxit) & !error)
   attr(T, "nit") <- nit
   attr(T, "eps") <- eps
   rownames(T) <- colnames(T) <- colnames(scores)
-  
+
   ## return transformation matrix
   return(T)
 }
+
+olmm_overwritePar <- function(object, coefficients) {
+
+  if (length(coefficients) < object$dims["p"]) {
+    stop("'coefficients' should be a numeric vector of length ", object$dims["p"])
+  }
+  if (!is.null(names(coefficients)) && any(names(coefficients) != names(object$coefficients))) {
+    stop("names of 'coefficients' must be identical to the names of object$coefficients")
+  }
+
+  new <- .Call("olmm_update_marg", object, coefficients,
+               PACKAGE = "vcrpart")
+  object <- modifyList(object, new)
+  if (object$dims["hasRanef"] > 0L)
+    object$u <- .Call("olmm_update_u", object, PACKAGE = "vcrpart")
+
+  return(object)
+}
+
